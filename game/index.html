@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="description" content="Ein freundliches Offline-Dino-Abenteuer: wachsen, entdecken und Bäume umschubsen.">
+  <title>Dinoinsel</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+      const theme = param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body, button {
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--cp-text);
+    }
+    body { background: var(--cp-bg); -webkit-tap-highlight-color: var(--cp-accent-soft); }
+    button {
+      font-size: 16px; font-weight: 650; cursor: pointer; border-radius: 10px;
+      border: 1px solid var(--cp-border); background: var(--cp-surface);
+      touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    }
+    button:focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 4px; }
+    button:active { transform: translateY(2px); }
+    svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .primary { background: var(--cp-accent); color: var(--cp-accent-fg); border-color: var(--cp-accent); }
+    .primary:hover { background: var(--cp-accent-hover); }
+    .eyebrow { color: var(--cp-accent); font-size: 12px; letter-spacing: 2px; font-weight: 800; text-transform: uppercase; }
+    .muted { color: var(--cp-text-muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #home { height: 100%; height: 100dvh; overflow: auto; display: flex; flex-direction: column; }
+    .home-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 40px 12px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 850; letter-spacing: -.8px; font-size: 25px; }
+    .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; background: var(--cp-accent); color: var(--cp-accent-fg); border-radius: 10px; }
+    .brand-mark svg { width: 27px; height: 27px; }
+    .quiet-badge { display: flex; gap: 8px; align-items: center; border: 1px solid var(--cp-border); padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--cp-text-muted); }
+    .quiet-badge svg { width: 18px; height: 18px; color: var(--cp-success); }
+    .home-main { width: 100%; max-width: 1260px; margin: auto; display: grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: center; padding: 16px 40px 24px; }
+    .intro h1 { font-size: clamp(32px, 3.7vw, 49px); line-height: 1.08; letter-spacing: -1.8px; margin: 12px 0 14px; font-weight: 850; }
+    .intro > p { margin: 0; max-width: 370px; color: var(--cp-text-muted); line-height: 1.6; font-size: 17px; }
+    .island-preview { position: relative; margin-top: 16px; border-radius: 16px; overflow: hidden; height: 258px; background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); }
+    #preview { width: 100%; height: 100%; display: block; }
+    .preview-caption { position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface); font-size: 12px; color: var(--cp-text-muted); }
+    .preview-caption svg { width: 16px; height: 16px; color: var(--cp-success); }
+    .choose-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+    .choose-heading h2 { font-size: 23px; font-weight: 800; letter-spacing: -.5px; margin: 0; }
+    .choose-heading span { font-size: 12px; color: var(--cp-text-muted); }
+    #dino-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .dino-card { position: relative; text-align: left; border-radius: 16px; padding: 10px 12px 12px; min-width: 0; border: 2px solid var(--cp-border); transition: border-color .15s, background .15s; }
+    .dino-card[aria-pressed="true"] { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+    .dino-card:hover { border-color: var(--cp-accent); }
+    .dino-card canvas { display: block; width: 100%; height: 91px; }
+    .dino-card strong { display: block; font-size: 16px; line-height: 1.2; letter-spacing: -.3px; }
+    .dino-card .diet { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--cp-text-muted); margin-top: 6px; }
+    .dino-card .diet svg { width: 14px; height: 14px; }
+    .selected-check { position: absolute; right: 8px; top: 8px; width: 20px; height: 20px; display: none; place-items: center; background: var(--cp-accent); color: var(--cp-accent-fg); border-radius: 50%; }
+    .selected-check svg { width: 13px; height: 13px; stroke-width: 3; }
+    .dino-card[aria-pressed="true"] .selected-check { display: grid; }
+    #dino-description { min-height: 48px; margin: 14px 0 0; line-height: 1.5; color: var(--cp-text-muted); font-size: 14px; }
+    #dino-description strong { color: var(--cp-text); }
+    .home-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 40px 24px; max-width: 1260px; width: 100%; margin: 0 auto; }
+    .save-note { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--cp-text-muted); line-height: 1.5; }
+    .save-note svg { color: var(--cp-success); }
+    #start-button { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px 28px; min-width: 256px; font-size: 19px; }
+    #save-warning { margin: 8px 40px; padding: 12px 16px; border-radius: 10px; background: var(--cp-surface); border: 2px solid var(--cp-warning); font-size: 14px; }
+    #game { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+    #world { display: block; width: 100%; height: 100%; background: var(--cp-bg); }
+    .hud { position: absolute; inset: 16px 20px auto; display: flex; align-items: flex-start; gap: 12px; pointer-events: none; }
+    .player-panel { display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; min-width: 228px; }
+    #player-portrait { width: 60px; height: 58px; }
+    #player-name { font-size: 17px; font-weight: 800; margin-bottom: 5px; letter-spacing: -.3px; }
+    .player-stats { display: flex; gap: 14px; font-size: 12px; color: var(--cp-text-muted); }
+    .player-stats strong { color: var(--cp-accent); font-size: 17px; }
+    .growth-track { height: 4px; background: var(--cp-border); border-radius: 2px; margin-top: 8px; width: 100%; overflow: hidden; }
+    #growth-fill { background: var(--cp-accent); height: 100%; border-radius: 2px; width: 5%; transition: width .25s; }
+    .mission { margin: 0 auto; padding: 11px 16px; border-radius: 10px; border: 1px solid var(--cp-border); background: var(--cp-surface); min-width: 180px; max-width: 280px; }
+    .mission-label { font-size: 10px; font-weight: 800; letter-spacing: 1.3px; color: var(--cp-text-muted); text-transform: uppercase; }
+    #mission-text { font-size: 14px; margin-top: 4px; font-weight: 650; }
+    .hud-actions { display: flex; gap: 8px; pointer-events: auto; }
+    .icon-button { display: grid; place-items: center; width: 48px; height: 48px; }
+    .map-panel { position: absolute; right: 20px; top: 80px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 12px; padding: 6px; width: 144px; pointer-events: none; }
+    #mini-map { width: 130px; height: 88px; display: block; }
+    .map-label { text-align: center; color: var(--cp-text-muted); font-size: 10px; margin: 0 0 4px; }
+    .controls { position: absolute; inset: auto 0 0; height: 182px; pointer-events: none; }
+    .stick-wrap { position: absolute; left: max(28px, env(safe-area-inset-left)); bottom: 24px; text-align: center; }
+    #joystick { position: relative; width: 132px; height: 132px; border-radius: 50%; border: 2px solid var(--cp-border-strong); background: var(--cp-panel); touch-action: none; pointer-events: auto; user-select: none; -webkit-user-select: none; }
+    .stick-cross { position: absolute; inset: 0; display: grid; place-items: center; color: var(--cp-border-strong); }
+    .stick-cross svg { width: 98px; height: 98px; stroke-width: 1; opacity: .55; }
+    #stick-knob { position: absolute; width: 54px; height: 54px; left: 37px; top: 37px; border-radius: 50%; background: var(--cp-surface); border: 2px solid var(--cp-accent); box-shadow: 0 2px 0 var(--cp-border); display: grid; place-items: center; color: var(--cp-accent); pointer-events: none; }
+    .control-caption { font-size: 11px; letter-spacing: 1px; font-weight: 800; text-transform: uppercase; color: var(--cp-text-muted); margin-top: 8px; }
+    .action-wrap { position: absolute; bottom: 24px; right: max(28px, env(safe-area-inset-right)); display: flex; gap: 14px; align-items: flex-end; pointer-events: auto; }
+    .action-button { width: 112px; height: 106px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-width: 2px; box-shadow: 0 3px 0 var(--cp-border); }
+    .action-button svg { width: 28px; height: 28px; }
+    .action-button span { font-size: 17px; }
+    .action-button small { font-size: 10px; font-weight: 550; opacity: .85; }
+    #eat-button { height: 126px; width: 122px; box-shadow: 0 3px 0 var(--cp-accent-hover); }
+    #push-button.ready { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+    #eat-button.ready { outline: 4px solid var(--cp-highlight); outline-offset: 3px; }
+    #hint { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); width: min(340px, 35vw); padding: 10px 14px; border-radius: 10px; background: var(--cp-surface); border: 1px solid var(--cp-border); font-size: 13px; line-height: 1.45; text-align: center; color: var(--cp-text-muted); pointer-events: none; }
+    #hint strong { color: var(--cp-text); }
+    #toast { position: absolute; top: 124px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; background: var(--cp-surface); color: var(--cp-text); border: 2px solid var(--cp-accent); font-size: 18px; font-weight: 750; max-width: min(480px, 65vw); text-align: center; pointer-events: none; z-index: 3; }
+    .modal-wrap { position: absolute; inset: 0; background: var(--cp-overlay); display: grid; place-items: center; padding: 20px; z-index: 5; }
+    .modal { width: 420px; max-width: 100%; max-height: 100%; overflow-y: auto; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; padding: 28px; text-align: center; }
+    .modal h2 { margin: 8px 0; font-size: 30px; letter-spacing: -.8px; }
+    .modal p { color: var(--cp-text-muted); font-size: 14px; line-height: 1.6; }
+    .modal .modal-mark { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--cp-accent-soft); color: var(--cp-accent); }
+    .modal-buttons { display: grid; gap: 10px; margin-top: 20px; }
+    .modal-buttons button { padding: 14px 16px; min-height: 48px; }
+    .help-steps { text-align: left; display: grid; gap: 14px; margin: 20px 0; }
+    .help-step { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; line-height: 1.5; color: var(--cp-text-muted); }
+    .help-step svg { color: var(--cp-accent); }
+    .help-step strong { color: var(--cp-text); display: block; }
+    .keyboard-note { font-size: 11px !important; }
+    .home-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .home-actions > button { min-height: 48px; padding: 12px 16px; }
+    .scores-panel { width: 680px; }
+    .score-table { width: 100%; border-collapse: collapse; text-align: right; font-size: 14px; }
+    .score-table th, .score-table td { padding: 12px 8px; border-bottom: 1px solid var(--cp-border); }
+    .score-table th:first-child { text-align: left; }
+    .score-table tfoot { font-weight: 800; color: var(--cp-accent); }
+    .score-table caption { text-align: left; color: var(--cp-text-muted); margin: 12px 0; line-height: 1.5; }
+    .fatal { position: fixed; inset: 20px; z-index: 50; background: var(--cp-surface); border: 2px solid var(--cp-danger); border-radius: 16px; padding: 24px; }
+    @media (max-height: 690px) and (min-width: 761px) {
+      .home-header { padding: 14px 28px 6px; }
+      .home-main { padding: 12px 28px; gap: 28px; }
+      .home-footer { padding: 8px 28px 16px; }
+      .intro h1 { font-size: 36px; }
+      .intro > p { font-size: 14px; }
+      .island-preview { height: 200px; }
+      .dino-card canvas { height: 70px; }
+      .dino-card strong { font-size: 14px; }
+      .choose-heading { margin-bottom: 10px; }
+      #dino-description { margin-top: 10px; font-size: 12px; min-height: 38px; }
+      #start-button { padding: 12px 24px; min-width: 230px; font-size: 17px; }
+      .hud { inset: 12px 16px auto; }
+      .player-panel { padding: 8px 12px; }
+      .map-panel { top: 72px; right: 16px; width: 120px; }
+      #mini-map { width: 106px; height: 72px; }
+      .stick-wrap, .action-wrap { bottom: 16px; }
+      #joystick { width: 112px; height: 112px; }
+      #stick-knob { left: 27px; top: 27px; }
+      .action-button { height: 88px; width: 96px; }
+      #eat-button { height: 104px; width: 104px; }
+      #hint { bottom: 26px; font-size: 12px; }
+      #toast { top: 106px; }
+    }
+    @media (max-width: 760px) {
+      .home-header { padding: 18px 20px 10px; }
+      .brand { font-size: 22px; }
+      .quiet-badge { font-size: 11px; padding: 7px; }
+      .home-main { grid-template-columns: 1fr; gap: 24px; padding: 12px 20px; }
+      .intro h1 { font-size: 36px; }
+      .intro > p { font-size: 15px; }
+      .island-preview { height: 180px; }
+      .home-footer { padding: 16px 20px 24px; flex-wrap: wrap; }
+      #start-button { width: 100%; }
+      .save-note { order: 2; }
+      .dino-card { padding: 8px; }
+      .dino-card canvas { height: 76px; }
+      .dino-card strong { font-size: 13px; }
+      .dino-card .diet { font-size: 10px; }
+      #dino-cards { gap: 8px; }
+      .choose-heading h2 { font-size: 20px; }
+      .hud { inset: 10px; gap: 8px; }
+      .player-panel { min-width: 0; padding: 8px; gap: 6px; }
+      #player-portrait { width: 36px; height: 40px; }
+      #player-name { font-size: 13px; }
+      .player-stats { font-size: 10px; gap: 8px; }
+      .player-stats strong { font-size: 14px; }
+      .mission { position: absolute; top: 78px; left: 0; padding: 8px 10px; min-width: 0; max-width: 205px; }
+      .mission-label { font-size: 9px; }
+      #mission-text { font-size: 12px; }
+      .hud-actions { margin-left: auto; }
+      .icon-button { width: 42px; height: 42px; }
+      .map-panel { top: 64px; right: 10px; width: 106px; }
+      #mini-map { width: 92px; height: 62px; }
+      .map-label { font-size: 9px; }
+      .stick-wrap { left: 16px; bottom: 18px; }
+      #joystick { width: 106px; height: 106px; }
+      #stick-knob { left: 24px; top: 24px; }
+      .action-wrap { right: 16px; bottom: 18px; gap: 10px; }
+      .action-button { width: 84px; height: 86px; }
+      #eat-button { width: 90px; height: 102px; }
+      .action-button span { font-size: 14px; }
+      #hint { width: calc(100% - 32px); bottom: 160px; max-width: 360px; font-size: 12px; }
+      #toast { top: 152px; font-size: 15px; max-width: 85vw; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg hidden aria-hidden="true">
+    <defs>
+      <symbol id="i-foot" viewBox="0 0 24 24"><path d="M8 15c-2-3-2-6 0-7s3 2 4 3c1-3 2-6 4-5s0 6 0 8c4-1 6 0 5 2s-6 2-8 4c-3 2-6 0-5-5Z"/><path d="m5 5 1 1m4-4v2m10 0-1 2"/></symbol>
+      <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M19 4C8 2 2 8 6 15s15 6 13-11Z"/><path d="M4 21 15 10m-5 5v-5m0 5h5"/></symbol>
+      <symbol id="i-food" viewBox="0 0 24 24"><path d="M9 15c-5-3-3-9 3-11s10 2 8 7-6 8-10 5l-4 4c-2 2-5-1-3-3Z"/><circle cx="15" cy="8" r="2"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="4"/></symbol>
+      <symbol id="i-sound" viewBox="0 0 24 24"><path d="m11 4-5 4H3v8h3l5 4Zm4 4c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/></symbol>
+      <symbol id="i-muted" viewBox="0 0 24 24"><path d="m11 4-5 4H3v8h3l5 4Zm5 5 5 6m0-6-5 6"/></symbol>
+      <symbol id="i-push" viewBox="0 0 24 24"><path d="M4 19V9a2 2 0 0 1 4 0v3-7a2 2 0 0 1 4 0v7-5a2 2 0 0 1 4 0v5-2a2 2 0 0 1 4 0v8c0 3-4 4-8 4S4 21 4 19Z"/></symbol>
+      <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4m10-8 4 4-4 4"/></symbol>
+      <symbol id="i-volcano" viewBox="0 0 24 24"><path d="m3 20 6-14h6l6 14ZM9 6l3 5 3-5M8 20l3-6m6 6-2-5"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></symbol>
+    </defs>
+  </svg>
+
+  <main id="home">
+    <header class="home-header">
+      <div class="brand"><span class="brand-mark"><svg><use href="#i-foot"/></svg></span>Dinoinsel</div>
+      <div class="quiet-badge"><svg><use href="#i-shield"/></svg>Offline. Ohne Werbung.</div>
+    </header>
+    <div id="save-warning" role="alert" hidden></div>
+    <div class="home-main">
+      <section class="intro">
+        <div class="eyebrow">Ein Abenteuer für dich</div>
+        <h1>Heute bist<br>du der Dino.</h1>
+        <p>Finde Futter, werde größer und entdecke deine Insel. Was wohl hinter dem nächsten Baum wartet?</p>
+        <div class="island-preview">
+          <canvas id="preview" aria-label="Eine grüne Dinoinsel mit einem friedlichen Vulkan"></canvas>
+          <div class="preview-caption"><svg><use href="#i-volcano"/></svg>Dieser Vulkan bricht niemals aus.</div>
+        </div>
+      </section>
+      <section aria-labelledby="choose-title">
+        <div class="choose-heading"><h2 id="choose-title">Wer möchtest du sein?</h2><span>6 Dinos zur Auswahl</span></div>
+        <div id="dino-cards"></div>
+        <p id="dino-description" aria-live="polite"></p>
+      </section>
+    </div>
+    <footer class="home-footer">
+      <div class="save-note"><svg><use href="#i-check"/></svg><span>Kein Zeitdruck. Kein Verlieren.<br>Dein Fortschritt bleibt auf diesem Tablet.</span></div>
+      <div class="home-actions">
+        <button id="home-scores-button">Meine Bestenliste</button>
+        <button id="start-button" class="primary">Ab auf die Insel <svg><use href="#i-arrow"/></svg></button>
+      </div>
+    </footer>
+  </main>
+
+  <section id="game" aria-label="Dino-Abenteuer" hidden>
+    <canvas id="world" aria-label="Die Dinoinsel. Bewege dich mit dem Steuerkreis oder den Pfeiltasten."></canvas>
+    <div class="hud">
+      <div class="player-panel">
+        <canvas id="player-portrait" aria-hidden="true"></canvas>
+        <div>
+          <div id="player-name"></div>
+          <div class="player-stats"><span>Kraft <strong id="strength">1</strong></span><span>Größe <strong id="size">100 %</strong></span></div>
+          <div class="growth-track" aria-hidden="true"><div id="growth-fill"></div></div>
+        </div>
+      </div>
+      <div class="mission"><div class="mission-label">Deine Entdecker-Aufgabe</div><div id="mission-text"></div></div>
+      <div class="hud-actions">
+        <button id="scores-button" class="icon-button" aria-label="Lokale Bestenliste öffnen"><svg><use href="#i-star"/></svg></button>
+        <button id="sound-button" class="icon-button" aria-label="Ton einschalten" aria-pressed="false"><svg><use href="#i-muted"/></svg></button>
+        <button id="pause-button" class="icon-button" aria-label="Spiel pausieren"><svg><use href="#i-pause"/></svg></button>
+      </div>
+    </div>
+    <div class="map-panel"><canvas id="mini-map" aria-label="Inselkarte mit deiner Position"></canvas><p class="map-label">Der Vulkan schläft.</p></div>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+    <div class="controls">
+      <div class="stick-wrap">
+        <div id="joystick" role="group" aria-label="Steuerkreis: ziehen zum Laufen. Alternativ Pfeiltasten verwenden.">
+          <div class="stick-cross"><svg><use href="#i-move"/></svg></div>
+          <div id="stick-knob"><svg><use href="#i-foot"/></svg></div>
+        </div>
+        <div class="control-caption">Hier laufen</div>
+      </div>
+      <div id="hint" role="status"></div>
+      <div class="action-wrap">
+        <button id="push-button" class="action-button"><svg><use href="#i-push"/></svg><span>Schubsen</span><small>Bäume &amp; Steine</small></button>
+        <button id="eat-button" class="action-button primary"><svg><use id="eat-icon" href="#i-food"/></svg><span>Essen</span><small>Wachsen &amp; stärker werden</small></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="pause-modal" class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+    <div class="modal">
+      <span class="modal-mark"><svg><use href="#i-pause"/></svg></span>
+      <h2 id="pause-title">Dino-Pause</h2>
+      <p id="pause-save-note">Deine Insel wartet auf dich.<br>Dein Fortschritt ist gespeichert.</p>
+      <div class="modal-buttons">
+        <button id="resume-button" class="primary">Weiterspielen</button>
+        <button id="help-button">So spielst du</button>
+        <button id="pause-scores-button">Meine Bestenliste</button>
+        <button id="change-button">Einen anderen Dino wählen</button>
+      </div>
+    </div>
+  </div>
+  <div id="help-modal" class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+    <div class="modal">
+      <div class="eyebrow">Ganz in deinem Tempo</div>
+      <h2 id="help-title">So geht's</h2>
+      <div class="help-steps">
+        <div class="help-step"><svg><use href="#i-move"/></svg><div><strong>Laufe los.</strong>Ziehe den Kreis links in die Richtung, in die dein Dino laufen soll.</div></div>
+        <div class="help-step"><svg><use href="#i-leaf"/></svg><div><strong>Futter macht groß.</strong>Gehe nah heran und tippe auf „Essen“. Pflanzenfresser mögen Büsche. Fleischfresser fressen kleinere Dinos.</div></div>
+        <div class="help-step"><svg><use href="#i-push"/></svg><div><strong>Mach den Weg frei.</strong>Mit „Schubsen“ fallen Bäume um und zerbrechen Steine. Manche brauchen mehr Kraft oder mehrere Schubser.</div></div>
+        <div class="help-step"><svg><use href="#i-volcano"/></svg><div><strong>Du bist sicher.</strong>Niemand frisst deinen Dino. Der Vulkan bricht niemals aus. Du kannst nicht verlieren.</div></div>
+      </div>
+      <p class="keyboard-note">Mit Tastatur: Pfeile oder WASD · E / Leertaste = Essen · F = Schubsen · Esc = Pause</p>
+      <div class="modal-buttons"><button id="close-help-button" class="primary">Alles klar!</button></div>
+    </div>
+  </div>
+  <div id="scores-modal" class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="scores-title" aria-describedby="scores-privacy" hidden>
+    <div class="modal scores-panel">
+      <div class="eyebrow">Deine sechs Dinos</div>
+      <h2 id="scores-title">Meine Bestenliste</h2>
+      <p id="scores-privacy">Nur auf diesem Gerät — noch keine gemeinsame Online-Bestenliste</p>
+      <table class="score-table">
+        <caption>Eine Mahlzeit = ein Futterpunkt. Eine richtig gelöste Matheaufgabe = ein Mathepunkt. Mathe kommt bald; diese Punkte starten bei null.</caption>
+        <thead><tr><th scope="col">Dino</th><th scope="col">Futter</th><th scope="col">Mathe</th><th scope="col">Gesamt</th></tr></thead>
+        <tbody id="score-rows"></tbody>
+        <tfoot><tr><th scope="row">Alle Dinos</th><td id="score-meals">0</td><td id="score-maths">0</td><td id="score-total">0</td></tr></tfoot>
+      </table>
+      <div class="modal-buttons"><button id="close-scores-button" class="primary">Zurück</button></div>
+    </div>
+  </div>
+  <div id="announcer" class="sr-only" aria-live="polite"></div>
+
+  <script id="dino-config" type="application/json">{"leaderboardApiUrl":""}</script>
+  <script id="dino-core">
+    const DinoCore = (() => {
+      "use strict";
+      const SPECIES = [
+        { id: "trex", name: "Tyrannosaurus rex", label: "T-Rex", diet: "meat", shape: "rex", color: "accent", fact: "Großer Kopf, kleine Arme: Das ist der T-Rex!" },
+        { id: "raptor", name: "Velociraptor", label: "Velociraptor", diet: "meat", shape: "raptor", color: "warning", fact: "Der flinke Velociraptor hatte sogar Federn." },
+        { id: "trike", name: "Triceratops", label: "Triceratops", diet: "plants", shape: "trike", color: "success", fact: "Drei Hörner und ein großer Nackenschild!" },
+        { id: "stego", name: "Stegosaurus", label: "Stegosaurus", diet: "plants", shape: "stego", color: "link", fact: "Auf seinem Rücken stehen große Knochenplatten." },
+        { id: "brachio", name: "Brachiosaurus", label: "Brachiosaurus", diet: "plants", shape: "brachio", color: "warning", fact: "Mit seinem langen Hals erreicht er hohe Blätter." },
+        { id: "anky", name: "Ankylosaurus", label: "Ankylosaurus", diet: "plants", shape: "anky", color: "accent", fact: "Ein gepanzerter Rücken und eine Keule am Schwanz!" },
+        { id: "compy", name: "Compsognathus", label: "Compsognathus", diet: "meat", shape: "raptor", color: "success", fact: "Ein kleiner Dino auf zwei flinken Beinen.", npcOnly: true }
+      ];
+      const PLAYABLE = SPECIES.filter(s => !s.npcOnly);
+      const MAP = Object.freeze({
+        width: 2800, height: 1900, centerX: 1400, centerY: 950, radiusX: 1320, radiusY: 840,
+        startX: 1310, startY: 1000,
+        volcano: Object.freeze({ x: 1660, y: 825, rx: 156, ry: 92, dormant: true }),
+        ponds: Object.freeze([{ x: 720, y: 555, rx: 208, ry: 118 }, { x: 2150, y: 1300, rx: 150, ry: 102 }])
+      });
+      const species = id => SPECIES.find(s => s.id === id);
+      const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+      const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+      const growth = meals => 1 + .12 * Math.log2(1 + meals);
+      const strength = meals => 1 + meals;
+      function randomGenerator(seed) {
+        let value = seed >>> 0;
+        return () => {
+          value += 0x6D2B79F5;
+          let t = Math.imul(value ^ value >>> 15, 1 | value);
+          t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+      function emptyProgress() {
+        const dinos = {};
+        PLAYABLE.forEach(s => { dinos[s.id] = { meals: 0, mathSolved: 0 }; });
+        return {
+          version: 1, selected: "trex", dinos, cleared: [], position: { x: MAP.startX, y: MAP.startY },
+          stats: { meals: 0, mathSolved: 0, trees: 0, rocks: 0, volcano: false, celebrated: false }, sound: false
+        };
+      }
+      function validateProgress(data) {
+        if (!data || data.version !== 1 || !PLAYABLE.some(s => s.id === data.selected)) throw new Error("Unbekanntes Spielstand-Format.");
+        const count = n => Number.isSafeInteger(n) && n >= 0 && n < Number.MAX_SAFE_INTEGER - 1;
+        if (!data.dinos || !PLAYABLE.every(s => data.dinos[s.id] && count(data.dinos[s.id].meals))) throw new Error("Ungültige Dino-Größen im Spielstand.");
+        if (!Array.isArray(data.cleared) || data.cleared.length > 88 || data.cleared.some(id => typeof id !== "string" || !/^(tree|rock)-\d+$/.test(id))) throw new Error("Ungültige Hindernisse im Spielstand.");
+        if (new Set(data.cleared).size !== data.cleared.length) throw new Error("Doppelte Hindernisse im Spielstand.");
+        if (data.cleared.some(id => {
+          const parts = id.split("-");
+          return String(Number(parts[1])) !== parts[1] || Number(parts[1]) > (parts[0] === "tree" ? 62 : 24);
+        })) throw new Error("Unbekanntes Hindernis im Spielstand.");
+        const p = data.position;
+        if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height) throw new Error("Ungültige Position im Spielstand.");
+        if (!data.stats || !["meals", "trees", "rocks"].every(k => count(data.stats[k])) || typeof data.stats.volcano !== "boolean" || typeof data.stats.celebrated !== "boolean" || typeof data.sound !== "boolean") throw new Error("Ungültiger Fortschritt im Spielstand.");
+        const migrated = JSON.parse(JSON.stringify(data));
+        for (const s of PLAYABLE) {
+          const dino = migrated.dinos[s.id];
+          if (dino.mathSolved === undefined) dino.mathSolved = 0;
+          if (!count(dino.mathSolved) || !count(dino.meals + dino.mathSolved)) throw new Error("Ungültige Dino-Punkte im Spielstand.");
+        }
+        const scores = localScores(migrated);
+        if (!count(scores.total)) throw new Error("Ungültige Gesamtpunkte im Spielstand.");
+        if (migrated.stats.mathSolved === undefined) migrated.stats.mathSolved = scores.mathSolved;
+        if (migrated.stats.mathSolved !== scores.mathSolved) throw new Error("Ungültige Mathepunkte im Spielstand.");
+        return migrated;
+      }
+      function localScores(progress) {
+        const rows = PLAYABLE.map((s, order) => {
+          const { meals, mathSolved } = progress.dinos[s.id];
+          return { id: s.id, name: s.name, meals, mathSolved, total: meals + mathSolved, order };
+        }).sort((a, b) => b.total - a.total || a.order - b.order);
+        const meals = rows.reduce((sum, row) => sum + row.meals, 0);
+        const mathSolved = rows.reduce((sum, row) => sum + row.mathSolved, 0);
+        return { rows, meals, mathSolved, total: meals + mathSolved };
+      }
+      function terrainAllows(x, y, radius) {
+        if (Math.pow((x - MAP.centerX) / (MAP.radiusX - radius - 20), 2) + Math.pow((y - MAP.centerY) / (MAP.radiusY - radius - 20), 2) >= 1) return false;
+        for (const pond of MAP.ponds) {
+          if (Math.pow((x - pond.x) / (pond.rx + radius), 2) + Math.pow((y - pond.y) / (pond.ry + radius), 2) < 1) return false;
+        }
+        const v = MAP.volcano;
+        return Math.pow((x - v.x) / (v.rx + radius), 2) + Math.pow((y - v.y) / (v.ry + radius), 2) >= 1;
+      }
+      class World {
+        constructor(progress, seed = 7217) {
+          this.progress = progress ? validateProgress(progress) : emptyProgress();
+          this.random = randomGenerator(seed);
+          this.time = 0;
+          this.events = [];
+          this.effects = [];
+          this.obstacles = [];
+          this.food = [];
+          this.npcs = [];
+          this.eatCooldown = 0;
+          this.pushCooldown = 0;
+          this.player = {
+            x: this.progress.position.x, y: this.progress.position.y, speciesId: this.progress.selected,
+            meals: this.progress.dinos[this.progress.selected].meals, facing: 1, walk: 0, moving: false, action: 0
+          };
+          this.buildMap();
+          this.ensurePlayerClearance();
+        }
+        playerScale() { return growth(this.player.meals); }
+        playerRadius() { return 23 * this.playerScale(); }
+        playerStrength() { return strength(this.player.meals); }
+        buildMap() {
+          this.addObstacle("tree", MAP.startX + 152, MAP.startY + 80, 1, 1);
+          this.addObstacle("rock", MAP.startX - 176, MAP.startY + 70, 3, 1);
+          for (let i = 0; i < 62; i++) {
+            const p = this.randomPoint(64, 165);
+            const required = 1 + Math.floor(this.random() * 4);
+            this.addObstacle("tree", p.x, p.y, required, .8 + required * .13);
+          }
+          for (let i = 0; i < 24; i++) {
+            const p = this.randomPoint(60, 170);
+            const required = 2 + Math.floor(this.random() * 6);
+            this.addObstacle("rock", p.x, p.y, required, .7 + required * .1);
+          }
+          const ids = new Set(this.obstacles.map(o => o.id));
+          if (this.progress.cleared.some(id => !ids.has(id))) throw new Error("Unbekanntes Hindernis im Spielstand.");
+          this.food.push({ id: "food-0", x: MAP.startX + 74, y: MAP.startY + 48, hiddenUntil: 0 });
+          for (let i = 1; i < 48; i++) {
+            const p = this.randomPoint(45, 100);
+            this.food.push({ id: "food-" + i, x: p.x, y: p.y, hiddenUntil: 0 });
+          }
+          for (let i = 0; i < 25; i++) {
+            const p = i === 0 ? { x: MAP.startX + 77, y: MAP.startY - 2 } : this.randomPoint(45, 160);
+            const s = i === 0 ? species("compy") : SPECIES[i % SPECIES.length];
+            this.npcs.push({
+              id: "npc-" + i, speciesId: s.id, x: p.x, y: p.y,
+              scale: i === 0 ? .56 : .63 + this.random() * .96, facing: this.random() > .5 ? 1 : -1,
+              walk: this.random() * 10, moving: false, action: 0, hiddenUntil: 0,
+              hunger: i === 0 ? 9 : 2 + this.random() * 10, target: null,
+              wanderX: p.x, wanderY: p.y, wanderTime: 1 + this.random() * 5
+            });
+          }
+        }
+        addObstacle(kind, x, y, required, scale) {
+          const index = this.obstacles.filter(o => o.kind === kind).length;
+          const id = kind + "-" + index;
+          this.obstacles.push({
+            id, kind, x, y, required, scale, radius: (kind === "tree" ? 19 : 27) * scale,
+            hp: required * 2, maxHp: required * 2,
+            cleared: this.progress.cleared.includes(id), fall: 0, hit: 0
+          });
+        }
+        randomPoint(clearance, fromStart = 0) {
+          for (let attempt = 0; attempt < 3000; attempt++) {
+            const x = 160 + this.random() * (MAP.width - 320);
+            const y = 180 + this.random() * (MAP.height - 360);
+            if (!terrainAllows(x, y, clearance)) continue;
+            if (Math.hypot(x - MAP.startX, y - MAP.startY) < fromStart) continue;
+            if (this.obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.radius + clearance)) continue;
+            return { x, y };
+          }
+          throw new Error("Auf der Insel konnte kein freier Platz gefunden werden.");
+        }
+        canStand(x, y, radius) {
+          return terrainAllows(x, y, radius) && !this.obstacles.some(o => !o.cleared && Math.hypot(x - o.x, y - o.y) < radius + o.radius);
+        }
+        ensurePlayerClearance() {
+          const radius = this.playerRadius();
+          if (this.canStand(this.player.x, this.player.y, radius)) return;
+          const origins = [{ x: this.player.x, y: this.player.y }, { x: MAP.startX, y: MAP.startY }];
+          for (const origin of origins) {
+            for (let offset = 0; offset <= 250; offset += 3) {
+              for (let i = 0; i < 24; i++) {
+                const angle = i / 24 * Math.PI * 2;
+                const x = origin.x + Math.cos(angle) * offset, y = origin.y + Math.sin(angle) * offset;
+                if (this.canStand(x, y, radius)) {
+                  this.player.x = x; this.player.y = y;
+                  return;
+                }
+              }
+            }
+          }
+          throw new Error("Für deinen gewachsenen Dino wurde kein freier Platz gefunden.");
+        }
+        move(entity, dx, dy, radius) {
+          const beforeX = entity.x, beforeY = entity.y;
+          if (this.canStand(entity.x + dx, entity.y, radius)) entity.x += dx;
+          if (this.canStand(entity.x, entity.y + dy, radius)) entity.y += dy;
+          entity.moving = Math.hypot(entity.x - beforeX, entity.y - beforeY) > .02;
+          if (Math.abs(dx) > .1) entity.facing = dx < 0 ? -1 : 1;
+          if (entity.moving) entity.walk += Math.hypot(dx, dy) * .065;
+        }
+        choose(id) {
+          if (!PLAYABLE.some(s => s.id === id)) throw new Error("Dieser Dino kann nicht gewählt werden.");
+          this.progress.dinos[this.player.speciesId].meals = this.player.meals;
+          this.player.speciesId = id;
+          this.player.meals = this.progress.dinos[id].meals;
+          this.progress.selected = id;
+          this.player.action = 0;
+          this.eatCooldown = 0;
+          this.pushCooldown = 0;
+          this.ensurePlayerClearance();
+        }
+        alive(npc) { return npc.hiddenUntil === 0; }
+        readyFood(food) { return food.hiddenUntil === 0; }
+        foodTarget() {
+          const meat = species(this.player.speciesId).diet === "meat";
+          let eligible = null, tooLarge = null, nearest = Infinity;
+          const choices = meat ? this.npcs : this.food;
+          for (const item of choices) {
+            if (item.hiddenUntil !== 0) continue;
+            const d = distance(this.player, item);
+            const reach = this.playerRadius() + (meat ? item.scale * 23 : 20) + 58;
+            if (d > reach) continue;
+            if (meat && item.scale >= this.playerScale()) {
+              if (!tooLarge || distance(this.player, tooLarge) > d) tooLarge = item;
+            } else if (d < nearest) {
+              eligible = item;
+              nearest = d;
+            }
+          }
+          return { item: eligible, tooLarge, meat };
+        }
+        obstacleTarget() {
+          let found = null, nearest = Infinity;
+          for (const item of this.obstacles) {
+            if (item.cleared) continue;
+            const d = distance(this.player, item);
+            if (d <= this.playerRadius() + item.radius + 70 && d < nearest) {
+              found = item;
+              nearest = d;
+            }
+          }
+          return found;
+        }
+        puff(x, y, kind, text) {
+          this.effects.push({ x, y, kind, text: text || "", life: 1.2, maxLife: 1.2, seed: this.random() * 8 });
+        }
+        emit(type, text) { this.events.push({ type, text }); }
+        eat() {
+          if (this.eatCooldown > 0) return { ok: false, reason: "cooldown" };
+          const target = this.foodTarget();
+          if (!target.item) {
+            const text = target.tooLarge
+              ? "Dieser Dino ist noch zu groß. Suche einen kleineren!"
+              : target.meat ? "Geh näher an einen kleineren Dino heran." : "Geh näher an einen grünen Futterbusch heran.";
+            this.emit("hint", text);
+            return { ok: false, reason: target.tooLarge ? "too-large" : "no-food" };
+          }
+          const item = target.item;
+          item.hiddenUntil = this.time + (target.meat ? 9 : 11);
+          this.player.meals++;
+          this.progress.dinos[this.player.speciesId].meals = this.player.meals;
+          this.progress.stats.meals++;
+          this.ensurePlayerClearance();
+          this.player.action = .5;
+          this.eatCooldown = .65;
+          this.puff(item.x, item.y - 32, "food", "+1 Kraft");
+          this.emit("eat", "Lecker! Du bist größer und stärker.");
+          this.checkGoals();
+          return { ok: true, id: item.id, strength: this.playerStrength(), scale: this.playerScale() };
+        }
+        push() {
+          if (this.pushCooldown > 0) return { ok: false, reason: "cooldown" };
+          const item = this.obstacleTarget();
+          if (!item) {
+            this.emit("hint", "Geh nah an einen Baum oder einen Stein heran.");
+            return { ok: false, reason: "no-obstacle" };
+          }
+          this.pushCooldown = .45;
+          this.player.action = .3;
+          item.hit = .3;
+          if (this.playerStrength() < item.required) {
+            this.emit("hint", "Dafür brauchst du Kraft " + item.required + ". Finde noch etwas Futter!");
+            return { ok: false, reason: "not-strong-enough", required: item.required };
+          }
+          item.hp = Math.max(0, item.hp - this.playerStrength());
+          if (item.hp > 0) {
+            this.emit("push", "Das wackelt schon. Noch ein Schubs!");
+            return { ok: true, cleared: false, hp: item.hp };
+          }
+          item.cleared = true;
+          item.fall = 1;
+          this.progress.cleared.push(item.id);
+          this.progress.stats[item.kind === "tree" ? "trees" : "rocks"]++;
+          this.puff(item.x, item.y - 20, item.kind, item.kind === "tree" ? "Baum um!" : "Weg frei!");
+          this.emit("clear", item.kind === "tree" ? "Geschafft! Der Baum ist umgefallen." : "Knack! Der Stein ist zerbrochen.");
+          this.checkGoals();
+          return { ok: true, cleared: true, id: item.id };
+        }
+        checkGoals() {
+          const stats = this.progress.stats;
+          if (stats.meals >= 3 && stats.trees >= 2 && stats.rocks >= 1 && stats.volcano && !stats.celebrated) {
+            stats.celebrated = true;
+            this.puff(this.player.x, this.player.y - 80, "star", "Insel-Profi!");
+            this.emit("achievement", "Du bist ein Insel-Profi! Entdecke weiter.");
+          }
+        }
+        mission() {
+          const s = this.progress.stats;
+          if (s.meals < 3) return "Finde Futter: " + s.meals + " / 3";
+          if (s.trees < 2) return "Schubse Bäume um: " + s.trees + " / 2";
+          if (s.rocks < 1) return "Zerlege einen Stein: 0 / 1";
+          if (!s.volcano) return "Besuche den schlafenden Vulkan";
+          return "Insel-Profi! Entdecke weiter.";
+        }
+        findNpcMeal(npc) {
+          const meat = species(npc.speciesId).diet === "meat";
+          const choices = meat ? this.npcs : this.food;
+          let best = null, bestDistance = 560;
+          for (const item of choices) {
+            if (item === npc || item.hiddenUntil !== 0 || (meat && item.scale >= npc.scale * .86)) continue;
+            const d = distance(npc, item);
+            if (d < bestDistance) { bestDistance = d; best = item; }
+          }
+          return best;
+        }
+        updateNpc(npc, dt) {
+          if (npc.hiddenUntil !== 0) {
+            if (this.time < npc.hiddenUntil) return;
+            const point = this.randomPoint(45, 145);
+            npc.x = point.x; npc.y = point.y;
+            npc.hiddenUntil = 0;
+            npc.scale = .6 + this.random() * .7;
+            npc.hunger = 3 + this.random() * 9;
+            npc.target = null;
+          }
+          npc.action = Math.max(0, npc.action - dt);
+          npc.hunger -= dt;
+          npc.wanderTime -= dt;
+          if (npc.target && npc.target.hiddenUntil !== 0) npc.target = null;
+          if (npc.hunger <= 0 && !npc.target) {
+            npc.target = this.findNpcMeal(npc);
+            if (!npc.target) npc.hunger = 2;
+          }
+          if (!npc.target && npc.wanderTime <= 0) {
+            npc.wanderX = npc.x + (this.random() - .5) * 240;
+            npc.wanderY = npc.y + (this.random() - .5) * 200;
+            npc.wanderTime = 3 + this.random() * 5;
+          }
+          const target = npc.target || { x: npc.wanderX, y: npc.wanderY };
+          const dx = target.x - npc.x, dy = target.y - npc.y, d = Math.hypot(dx, dy);
+          if (npc.target && d < 47 + npc.scale * 12) {
+            const meal = npc.target;
+            meal.hiddenUntil = this.time + (meal.speciesId ? 10 : 12);
+            npc.target = null;
+            npc.hunger = 8 + this.random() * 10;
+            npc.scale = Math.min(2.3, npc.scale + .025);
+            npc.action = .8;
+            npc.moving = false;
+            this.puff(npc.x + 18, npc.y - 60 * npc.scale, "graze", "Mampf");
+            this.emit("npc-eat", species(npc.speciesId).name);
+          } else if (d > 12) {
+            const speed = npc.target ? 46 : 27;
+            this.move(npc, dx / d * dt * speed, dy / d * dt * speed, npc.scale * 18);
+            if (!npc.moving) { npc.target = null; npc.wanderTime = 0; npc.hunger = Math.max(.5, npc.hunger); }
+          } else {
+            npc.moving = false;
+          }
+        }
+        update(dt, input = { x: 0, y: 0 }) {
+          if (!Number.isFinite(dt) || dt < 0 || dt > .25) throw new RangeError("Ungültiger Zeitschritt.");
+          if (!Number.isFinite(input.x) || !Number.isFinite(input.y)) throw new TypeError("Ungültige Steuerung.");
+          this.time += dt;
+          this.eatCooldown = Math.max(0, this.eatCooldown - dt);
+          this.pushCooldown = Math.max(0, this.pushCooldown - dt);
+          this.player.action = Math.max(0, this.player.action - dt);
+          const length = Math.hypot(input.x, input.y);
+          const factor = length > 1 ? 1 / length : 1;
+          const speed = 184 + Math.min(26, Math.sqrt(this.player.meals) * 3);
+          this.move(this.player, input.x * factor * speed * dt, input.y * factor * speed * dt, this.playerRadius());
+          for (const o of this.obstacles) { o.hit = Math.max(0, o.hit - dt); o.fall = Math.max(0, o.fall - dt * 1.25); }
+          for (const f of this.food) { if (f.hiddenUntil && this.time >= f.hiddenUntil) f.hiddenUntil = 0; }
+          for (const npc of this.npcs) this.updateNpc(npc, dt);
+          this.effects.forEach(e => { e.life -= dt; });
+          this.effects = this.effects.filter(e => e.life > 0);
+          const v = MAP.volcano;
+          if (!this.progress.stats.volcano && Math.hypot(this.player.x - v.x, this.player.y - v.y) < 285) {
+            this.progress.stats.volcano = true;
+            this.emit("discover", "Du hast den Vulkan entdeckt. Er schläft für immer!");
+            this.checkGoals();
+          }
+        }
+        drainEvents() { return this.events.splice(0); }
+        save() {
+          this.progress.position = { x: this.player.x, y: this.player.y };
+          this.progress.dinos[this.player.speciesId].meals = this.player.meals;
+          return validateProgress(this.progress);
+        }
+      }
+      return { SPECIES, PLAYABLE, MAP, World, species, growth, strength, clamp, distance, randomGenerator, emptyProgress, validateProgress, localScores, terrainAllows };
+    })();
+    if (typeof module !== "undefined" && module.exports) module.exports = DinoCore;
+  </script>
+
+  <script id="dino-app">
+    (() => {
+      "use strict";
+      const C = DinoCore;
+      const $ = id => document.getElementById(id);
+      const FONT = '"Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif';
+      const SAVE_KEY = "dino-insel-v1";
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const palette = {};
+      let mode = "home", selected = "trex", world, camera = { x: C.MAP.startX, y: C.MAP.startY };
+      let cssWidth = 0, cssHeight = 0, zoom = 1, lastTime = 0, uiClock = 0, saveClock = 0, toastUntil = 0;
+      let pointerId = null, axis = { x: 0, y: 0 }, audio = null, saveError = "", inputError = false;
+      let scoresReturn = "home", scoresOpener = null;
+      const keys = new Set();
+      const gameCanvas = $("world"), ctx = gameCanvas.getContext("2d");
+      const grassRandom = C.randomGenerator(8319);
+      const decorations = [];
+      for (let i = 0; i < 430; i++) {
+        const x = 150 + grassRandom() * 2500, y = 150 + grassRandom() * 1600;
+        if (C.terrainAllows(x, y, 10)) decorations.push({ x, y, type: i % 6, size: .5 + grassRandom() });
+      }
+      function readPalette() {
+        const style = getComputedStyle(document.documentElement);
+        ["bg", "bg-elevated", "surface", "border", "border-strong", "text", "text-muted", "text-soft", "accent", "accent-fg", "success", "warning", "link", "sheen"].forEach(name => {
+          palette[name] = style.getPropertyValue("--cp-" + name).trim();
+        });
+      }
+      function storageWarning(message, error) {
+        saveError = message;
+        $("save-warning").textContent = message;
+        $("save-warning").hidden = false;
+        $("pause-save-note").textContent = "Speichern ist gerade nicht möglich. Dein Fortschritt bleibt nur erhalten, solange die App geöffnet ist.";
+        if (error) console.error("Dinoinsel: " + message, error);
+      }
+      function readProgress() {
+        try {
+          const text = localStorage.getItem(SAVE_KEY);
+          return text ? C.validateProgress(JSON.parse(text)) : C.emptyProgress();
+        } catch (error) {
+          storageWarning("Der Spielstand konnte nicht geladen werden. Du kannst spielen, aber der alte Spielstand wird nicht überschrieben.", error);
+          inputError = true;
+          return C.emptyProgress();
+        }
+      }
+      function persist() {
+        if (inputError) return false;
+        try {
+          localStorage.setItem(SAVE_KEY, JSON.stringify(world.save()));
+          saveError = "";
+          $("save-warning").hidden = true;
+          $("pause-save-note").innerHTML = "Deine Insel wartet auf dich.<br>Dein Fortschritt ist gespeichert.";
+          return true;
+        } catch (error) {
+          const firstFailure = !saveError;
+          storageWarning("Dein Gerät kann den Fortschritt gerade nicht speichern. Bitte lasse die App geöffnet, damit nichts verloren geht.", error);
+          if (firstFailure && mode !== "home") showToast("Speichern nicht möglich. Bitte lasse die App geöffnet.", 6);
+          return false;
+        }
+      }
+      function rounded(g, x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        g.beginPath(); g.moveTo(x + radius, y); g.arcTo(x + w, y, x + w, y + h, radius);
+        g.arcTo(x + w, y + h, x, y + h, radius); g.arcTo(x, y + h, x, y, radius);
+        g.arcTo(x, y, x + w, y, radius); g.closePath();
+      }
+      function ellipse(g, x, y, rx, ry, color, alpha = 1) {
+        g.save(); g.globalAlpha *= alpha; g.fillStyle = color; g.beginPath();
+        g.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), 0, 0, Math.PI * 2); g.fill(); g.restore();
+      }
+      function path(g, points, color, stroke) {
+        g.beginPath(); points(g); if (color) { g.fillStyle = color; g.fill(); }
+        if (stroke) { g.strokeStyle = stroke; g.stroke(); }
+      }
+      function line(g, x1, y1, x2, y2, color, width) {
+        g.strokeStyle = color; g.lineWidth = width; g.lineCap = "round";
+        g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+      }
+      function dino(g, x, y, id, scale, facing, walk = 0, moving = false, action = 0, time = 0) {
+        const s = C.species(id), body = palette[s.color], ink = palette.text;
+        const stride = moving && !reducedMotion ? Math.sin(walk) : 0;
+        const bob = moving && !reducedMotion ? Math.abs(stride) * 2 : 0;
+        g.save(); g.translate(x, y); g.scale(scale * facing, scale);
+        ellipse(g, 0, 3, s.shape === "brachio" ? 55 : 47, 12, ink, .10);
+        g.translate(0, -bob);
+        g.lineJoin = "round"; g.lineCap = "round"; g.lineWidth = 2.2;
+        const fourFeet = ["trike", "stego", "brachio", "anky"].includes(s.shape);
+        if (fourFeet) {
+          g.save(); g.globalAlpha = .68;
+          line(g, -29, -30, -29 - stride * 7, 0, body, 15);
+          line(g, 26, -30, 26 + stride * 7, 0, body, 15); g.restore();
+        }
+        path(g, p => {
+          p.moveTo(-33, -52); p.bezierCurveTo(-65, -48, -85, -62, -107, -58);
+          p.bezierCurveTo(-95, -43, -74, -27, -30, -24); p.closePath();
+        }, body);
+        if (s.shape === "anky") {
+          ellipse(g, -104, -56, 16, 12, body);
+          line(g, -108, -61, -100, -53, palette["bg-elevated"], 2);
+        }
+        if (s.shape === "stego") {
+          for (let i = 0; i < 6; i++) {
+            const px = -53 + i * 18, py = -57 - Math.sin(i / 5 * Math.PI) * 17;
+            path(g, p => { p.moveTo(px - 11, py + 8); p.lineTo(px - 8, py - 22); p.lineTo(px + 4, py - 32); p.lineTo(px + 13, py + 4); p.closePath(); }, palette.accent);
+          }
+          line(g, -84, -48, -89, -69, palette["bg-elevated"], 5);
+          line(g, -91, -50, -105, -68, palette["bg-elevated"], 4);
+        }
+        ellipse(g, -4, -43, fourFeet ? 51 : 42, 29, body);
+        ellipse(g, -1, -33, fourFeet ? 40 : 30, 17, palette["bg-elevated"], .33);
+        if (s.shape === "anky") {
+          for (let row = 0; row < 2; row++) {
+            for (let i = 0; i < 5; i++) {
+              const px = -38 + i * 17 + row * 4, py = -58 + row * 15;
+              path(g, p => { p.moveTo(px, py - 7); p.lineTo(px + 8, py); p.lineTo(px, py + 7); p.lineTo(px - 8, py); p.closePath(); }, palette["bg-elevated"]);
+              g.save(); g.globalAlpha = .62; ellipse(g, px, py, 5, 4, body); g.restore();
+            }
+          }
+        }
+        const footY = 1;
+        line(g, -23, -28, -23 + stride * 8, footY, body, 17);
+        line(g, fourFeet ? 30 : 12, -25, (fourFeet ? 30 : 12) - stride * 8, footY, body, 17);
+        line(g, -25 + stride * 8, footY + 4, -12 + stride * 8, footY + 4, body, 10);
+        line(g, (fourFeet ? 26 : 8) - stride * 8, footY + 4, (fourFeet ? 39 : 21) - stride * 8, footY + 4, body, 10);
+        let eyeX = 55, eyeY = -78;
+        if (s.shape === "rex" || s.shape === "raptor") {
+          ellipse(g, 26, -58, 19, 32, body);
+          if (s.shape === "rex") {
+            rounded(g, 24, -104, 59, 43, 14); g.fillStyle = body; g.fill();
+            rounded(g, 35, -73 + (action ? 6 : 0), 46, 17, 8); g.fill();
+            eyeX = 52; eyeY = -90;
+            line(g, 43, -71, 78, -71, ink, 2);
+            if (action) ellipse(g, 63, -68, 17, 7, ink, .7);
+            for (let i = 0; i < 3; i++) path(g, p => { p.moveTo(57 + i * 8, -70); p.lineTo(60 + i * 8, -65); p.lineTo(63 + i * 8, -70); }, palette["bg-elevated"]);
+          } else {
+            rounded(g, 22, -89, 51, 30, 12); g.fillStyle = body; g.fill();
+            eyeX = 45; eyeY = -78;
+            line(g, 52, -63, 69, -64, ink, 2);
+            if (action) ellipse(g, 61, -62, 11, 6, ink, .7);
+            for (let i = 0; i < 3; i++) line(g, 20 - i * 5, -38, 10 - i * 5, -26, palette["bg-elevated"], 3);
+          }
+          line(g, 22, -47, 33, -37 + (action ? -5 : 0), body, 8);
+          line(g, 33, -37 + (action ? -5 : 0), 40, -40 + (action ? -5 : 0), body, 6);
+          for (let i = 0; i < 3; i++) ellipse(g, -25 + i * 13, -53 + i % 2 * 5, 4, 3, palette["bg-elevated"], .35);
+        } else if (s.shape === "trike") {
+          ellipse(g, 33, -57, 27, 33, body);
+          ellipse(g, 33, -60, 19, 24, palette["bg-elevated"], .4);
+          ellipse(g, 55, -42, 32, 22, body);
+          path(g, p => { p.moveTo(43, -59); p.lineTo(51, -92); p.lineTo(58, -57); }, palette["bg-elevated"]);
+          path(g, p => { p.moveTo(62, -60); p.lineTo(73, -90); p.lineTo(74, -49); }, palette["bg-elevated"]);
+          path(g, p => { p.moveTo(80, -43); p.lineTo(91, -63); p.lineTo(89, -37); }, palette["bg-elevated"]);
+          eyeX = 61; eyeY = -49;
+          line(g, 73, -32, 86, -35, ink, 2);
+          if (action) ellipse(g, 82, -31, 7, 5, ink, .7);
+        } else if (s.shape === "brachio") {
+          path(g, p => { p.moveTo(21, -45); p.bezierCurveTo(36, -72, 25, -112, 39, -148); p.lineTo(58, -146); p.bezierCurveTo(49, -101, 61, -73, 44, -36); p.closePath(); }, body);
+          ellipse(g, 58, -145, 25, 16, body);
+          eyeX = 61; eyeY = -150;
+          line(g, 68, -137, 78, -139, ink, 2);
+          if (action) ellipse(g, 76, -135, 8, 4, ink, .7);
+          for (let i = 0; i < 4; i++) ellipse(g, -31 + i * 18, -48 + i % 2 * 8, 7, 6, palette["bg-elevated"], .35);
+        } else {
+          ellipse(g, 54, -35, s.shape === "anky" ? 28 : 22, 17, body);
+          eyeX = 61; eyeY = -40;
+          line(g, 66, -27, 77, -30, ink, 2);
+          if (action) ellipse(g, 74, -27, 8, 5, ink, .7);
+        }
+        const blink = Math.sin(time * .7 + x * .007) > .997;
+        if (blink) line(g, eyeX - 3, eyeY, eyeX + 3, eyeY, ink, 2.5);
+        else { ellipse(g, eyeX, eyeY, 4.2, 5, ink); ellipse(g, eyeX + 1, eyeY - 2, 1.4, 1.6, palette["bg-elevated"]); }
+        ellipse(g, eyeX + 7, eyeY + 9, 5, 3, palette["bg-elevated"], .4);
+        g.restore();
+      }
+      function tree(g, item, time) {
+        g.save(); g.translate(item.x, item.y); g.scale(item.scale, item.scale);
+        if (item.cleared && item.fall <= 0) {
+          ellipse(g, 0, 2, 17, 7, palette["text-muted"], .2);
+          rounded(g, -10, -9, 20, 13, 3); g.fillStyle = palette["text-muted"]; g.fill();
+          ellipse(g, 0, -9, 10, 4, palette.warning, .7); g.restore(); return;
+        }
+        if (item.fall > 0) { g.rotate((1 - item.fall) * 1.5); g.globalAlpha = Math.min(1, item.fall * 2); }
+        if (item.hit > 0 && !reducedMotion) g.rotate(Math.sin(item.hit * 60) * .045);
+        ellipse(g, 0, 3, 36, 11, palette.text, .09);
+        line(g, 0, 0, 0, -64, palette["text-muted"], 13);
+        line(g, 0, -41, -19, -60, palette["text-muted"], 6);
+        line(g, 0, -36, 20, -52, palette["text-muted"], 5);
+        const sway = reducedMotion ? 0 : Math.sin(time * 1.1 + item.x) * 1.5;
+        ellipse(g, -23 + sway, -67, 28, 29, palette.success);
+        ellipse(g, 22 + sway, -69, 32, 27, palette.success);
+        ellipse(g, sway, -91, 33, 32, palette.success);
+        ellipse(g, -9 + sway, -98, 22, 17, palette["bg-elevated"], .2);
+        ellipse(g, 23 + sway, -59, 21, 12, palette.text, .07);
+        if (item.required >= 4) {
+          ellipse(g, -21, -71, 4, 5, palette.warning);
+          ellipse(g, 19, -92, 4, 5, palette.warning);
+        }
+        g.restore();
+      }
+      function rock(g, item) {
+        g.save(); g.translate(item.x, item.y); g.scale(item.scale, item.scale);
+        if (item.cleared) {
+          ellipse(g, -9, 2, 9, 5, palette["border-strong"], .4);
+          ellipse(g, 13, -3, 7, 4, palette["border-strong"], .3);
+          g.restore(); return;
+        }
+        if (item.hit && !reducedMotion) g.translate(Math.sin(item.hit * 80) * 3, 0);
+        ellipse(g, 0, 4, 35, 10, palette.text, .09);
+        path(g, p => { p.moveTo(-34, -3); p.lineTo(-27, -28); p.lineTo(-9, -47); p.lineTo(17, -44); p.lineTo(32, -24); p.lineTo(38, -1); p.quadraticCurveTo(2, 14, -34, -3); }, palette["border-strong"]);
+        path(g, p => { p.moveTo(-27, -28); p.lineTo(-9, -47); p.lineTo(17, -44); p.lineTo(5, -23); p.closePath(); }, palette.border);
+        if (item.hp < item.maxHp) {
+          path(g, p => { p.moveTo(3, -34); p.lineTo(-4, -18); p.lineTo(5, -12); p.lineTo(0, 0); }, null, palette["text-muted"]);
+        }
+        ellipse(g, -22, 0, 12, 5, palette.success, .3);
+        g.restore();
+      }
+      function bush(g, food, time) {
+        if (food.hiddenUntil !== 0) {
+          line(g, food.x - 6, food.y, food.x + 5, food.y - 6, palette.success, 3); return;
+        }
+        const sway = reducedMotion ? 0 : Math.sin(time + food.x) * 1.3;
+        ellipse(g, food.x, food.y + 3, 29, 8, palette.text, .08);
+        ellipse(g, food.x - 13, food.y - 10, 17, 16, palette.success);
+        ellipse(g, food.x + 13, food.y - 10, 17, 17, palette.success);
+        ellipse(g, food.x + sway, food.y - 22, 19, 19, palette.success);
+        ellipse(g, food.x - 6, food.y - 28, 10, 8, palette["bg-elevated"], .25);
+        [[-15, -13], [7, -24], [15, -9], [-3, -7]].forEach(p => {
+          ellipse(g, food.x + p[0], food.y + p[1], 4, 4, palette.accent);
+          ellipse(g, food.x + p[0] - 1, food.y + p[1] - 1, 1.2, 1.2, palette["bg-elevated"], .6);
+        });
+      }
+      function volcano(g, compact = false) {
+        const v = C.MAP.volcano;
+        g.save(); g.translate(v.x, v.y);
+        ellipse(g, 0, 22, 170, 57, palette.text, .08);
+        path(g, p => { p.moveTo(-171, 23); p.bezierCurveTo(-118, -33, -71, -93, -45, -140); p.quadraticCurveTo(0, -155, 43, -140); p.bezierCurveTo(88, -68, 129, -21, 174, 25); p.quadraticCurveTo(0, 69, -171, 23); }, palette["border-strong"]);
+        path(g, p => { p.moveTo(-45, -140); p.lineTo(-22, -58); p.lineTo(-76, 27); p.lineTo(-143, 21); p.closePath(); }, palette.border);
+        path(g, p => { p.moveTo(20, -138); p.lineTo(72, 9); p.lineTo(132, 26); p.lineTo(41, -141); }, palette["text-muted"]);
+        ellipse(g, 0, -138, 44, 13, palette["text-muted"]);
+        ellipse(g, 0, -136, 28, 7, palette.success, .65);
+        ellipse(g, -69, 20, 54, 14, palette.success, .25);
+        ellipse(g, 67, 25, 66, 17, palette.success, .24);
+        for (let i = 0; i < 4; i++) line(g, -34 + i * 21, -145, -34 + i * 21, -153 - i % 2 * 5, palette.success, 3);
+        if (!compact) {
+          label(g, "Z z z", 16, -175, palette["text-muted"], 16);
+          label(g, "Schlafender Vulkan", 0, 66, palette["text-muted"], 13);
+        }
+        g.restore();
+      }
+      function terrain(g, time, detail) {
+        const m = C.MAP;
+        ellipse(g, m.centerX, m.centerY + 17, m.radiusX + 46, m.radiusY + 38, palette.link, .14);
+        ellipse(g, m.centerX, m.centerY, m.radiusX + 15, m.radiusY + 14, palette.warning, .18);
+        ellipse(g, m.centerX, m.centerY, m.radiusX, m.radiusY, palette.bg);
+        ellipse(g, m.centerX, m.centerY, m.radiusX - 30, m.radiusY - 26, palette.success, .105);
+        g.save(); g.lineWidth = 85; g.lineCap = "round"; g.strokeStyle = palette["bg-elevated"]; g.globalAlpha = .6;
+        g.beginPath(); g.moveTo(400, 1020); g.bezierCurveTo(920, 1350, 1240, 790, 1700, 1110); g.bezierCurveTo(2100, 1400, 2150, 700, 2410, 790); g.stroke();
+        g.lineWidth = 48; g.beginPath(); g.moveTo(1000, 1380); g.bezierCurveTo(1450, 1290, 1170, 850, 1470, 590); g.stroke(); g.restore();
+        C.MAP.ponds.forEach(p => {
+          ellipse(g, p.x, p.y, p.rx + 9, p.ry + 8, palette["bg-elevated"]);
+          ellipse(g, p.x, p.y, p.rx, p.ry, palette.link, .30);
+          ellipse(g, p.x - 12, p.y - 12, p.rx - 28, p.ry - 21, palette.link, .13);
+          if (detail) {
+            for (let i = 0; i < 7; i++) {
+              const yy = p.y - p.ry * .7 + i * p.ry * .22;
+              const xx = p.x + Math.sin(i * 4) * p.rx * .5;
+              line(g, xx - 16, yy, xx + 16 + Math.sin(time + i) * 5, yy, palette.sheen, 2);
+            }
+          }
+        });
+        if (detail) {
+          for (const item of decorations) {
+            if (!visible(item.x, item.y, 30)) continue;
+            g.save(); g.globalAlpha = item.type === 0 ? .45 : .27;
+            if (item.type === 0) {
+              ellipse(g, item.x, item.y, 3, 3, palette.warning);
+              ellipse(g, item.x + 6, item.y - 3, 2.5, 2.5, palette.accent);
+            } else {
+              line(g, item.x, item.y, item.x - 3, item.y - 6 * item.size, palette.success, 1.7);
+              line(g, item.x, item.y, item.x + 3, item.y - 9 * item.size, palette.success, 1.7);
+            }
+            g.restore();
+          }
+        }
+      }
+      function label(g, text, x, y, color, size = 13, background = true) {
+        g.save(); g.font = "650 " + size + "px " + FONT; g.textAlign = "center"; g.textBaseline = "middle";
+        const width = g.measureText(text).width;
+        if (background) { rounded(g, x - width / 2 - 8, y - size / 2 - 5, width + 16, size + 10, 7); g.fillStyle = palette.surface; g.fill(); }
+        g.fillStyle = color; g.fillText(text, x, y + .5); g.restore();
+      }
+      function star(g, x, y, radius, color, angle = 0) {
+        g.save(); g.translate(x, y); g.rotate(angle); g.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? radius * .45 : radius;
+          if (i === 0) g.moveTo(Math.cos(a) * r, Math.sin(a) * r); else g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        g.closePath(); g.fillStyle = color; g.fill(); g.restore();
+      }
+      function visible(x, y, margin = 170) {
+        return Math.abs(x - camera.x) < cssWidth / zoom / 2 + margin && Math.abs(y - camera.y) < cssHeight / zoom / 2 + margin;
+      }
+      function renderWorld() {
+        if (!cssWidth || !cssHeight) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cssWidth, cssHeight);
+        ctx.fillStyle = palette.bg; ctx.fillRect(0, 0, cssWidth, cssHeight);
+        ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = palette.link; ctx.fillRect(0, 0, cssWidth, cssHeight); ctx.restore();
+        ctx.save(); ctx.translate(cssWidth / 2, cssHeight * .50); ctx.scale(zoom, zoom); ctx.translate(-camera.x, -camera.y);
+        terrain(ctx, world.time, true);
+        const foodTarget = world.foodTarget().item, obstacle = world.obstacleTarget();
+        if (foodTarget) {
+          ctx.save(); ctx.strokeStyle = palette.accent; ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
+          ctx.beginPath(); ctx.ellipse(foodTarget.x, foodTarget.y + 4, foodTarget.speciesId ? foodTarget.scale * 42 + 12 : 38, 16, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+        }
+        const sprites = [];
+        world.obstacles.forEach(o => { if (visible(o.x, o.y)) sprites.push({ y: o.y, draw: () => o.kind === "tree" ? tree(ctx, o, world.time) : rock(ctx, o) }); });
+        world.food.forEach(f => { if (visible(f.x, f.y)) sprites.push({ y: f.y, draw: () => bush(ctx, f, world.time) }); });
+        world.npcs.forEach(n => {
+          if (world.alive(n) && visible(n.x, n.y)) sprites.push({ y: n.y, draw: () => dino(ctx, n.x, n.y, n.speciesId, n.scale * .73, n.facing, n.walk, n.moving, n.action, world.time) });
+        });
+        sprites.push({ y: C.MAP.volcano.y + 25, draw: () => volcano(ctx) });
+        const p = world.player;
+        sprites.push({ y: p.y, draw: () => {
+          ellipse(ctx, p.x, p.y + 6, 46 * world.playerScale(), 17 * world.playerScale(), palette.accent, .13);
+          dino(ctx, p.x, p.y, p.speciesId, world.playerScale() * .83, p.facing, p.walk, p.moving, p.action, world.time);
+        } });
+        sprites.sort((a, b) => a.y - b.y).forEach(s => s.draw());
+        const playerShape = C.species(p.speciesId).shape;
+        const markerY = p.y - (playerShape === "brachio" ? 156 : playerShape === "anky" ? 79 : 112) * world.playerScale() * .83 - 18;
+        const occupied = [{ left: p.x - 43, right: p.x + 43, top: markerY - 13, bottom: markerY + 13 }];
+        world.npcs.filter(n => world.alive(n) && visible(n.x, n.y, 50)).sort((a, b) => a.y - b.y).forEach(n => {
+          if (world.alive(n) && visible(n.x, n.y, 50)) {
+            const text = C.species(n.speciesId).name;
+            ctx.font = "650 12px " + FONT;
+            const halfWidth = ctx.measureText(text).width / 2 + 9;
+            let y = n.y + 25;
+            for (let step = 0; step < 8; step++) {
+              if (!occupied.some(r => n.x - halfWidth < r.right && n.x + halfWidth > r.left && y - 12 < r.bottom && y + 12 > r.top)) break;
+              y += 25;
+            }
+            if (y > n.y + 25) {
+              ctx.save(); ctx.globalAlpha = .45;
+              line(ctx, n.x, n.y + 12, n.x, y - 11, palette["border-strong"], 1);
+              ctx.restore();
+            }
+            occupied.push({ left: n.x - halfWidth, right: n.x + halfWidth, top: y - 12, bottom: y + 12 });
+            label(ctx, text, n.x, y, n === foodTarget ? palette.accent : palette["text-muted"], 12);
+          }
+        });
+        label(ctx, "DEIN DINO", p.x, markerY, palette.accent, 11);
+        path(ctx, g => { g.moveTo(p.x - 4, markerY + 13); g.lineTo(p.x, markerY + 18); g.lineTo(p.x + 4, markerY + 13); }, palette.accent);
+        if (obstacle) {
+          label(ctx, (obstacle.kind === "tree" ? "Baum" : "Stein") + " · Kraft " + obstacle.required, obstacle.x, obstacle.y + 25, world.playerStrength() >= obstacle.required ? palette.accent : palette["text-muted"], 12);
+        }
+        for (const e of world.effects) {
+          if (!visible(e.x, e.y)) continue;
+          const elapsed = 1 - e.life / e.maxLife;
+          ctx.save(); ctx.globalAlpha = Math.min(1, e.life * 2.5);
+          if (!reducedMotion && e.kind !== "graze") {
+            for (let i = 0; i < 8; i++) {
+              const a = i / 8 * Math.PI * 2 + e.seed, r = 15 + elapsed * 66;
+              const color = e.kind === "rock" ? palette["border-strong"] : i % 2 ? palette.warning : palette.success;
+              star(ctx, e.x + Math.cos(a) * r, e.y + Math.sin(a) * r - elapsed * 22, 3 + (1 - elapsed) * 4, color, a + elapsed);
+            }
+          }
+          label(ctx, e.text, e.x, e.y - elapsed * 38, e.kind === "graze" ? palette["text-muted"] : palette.accent, e.kind === "graze" ? 12 : 17);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      function fitCanvas(canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.round(rect.width * ratio));
+        canvas.height = Math.max(1, Math.round(rect.height * ratio));
+        const g = canvas.getContext("2d"); g.setTransform(ratio, 0, 0, ratio, 0, 0);
+        return { g, width: rect.width, height: rect.height };
+      }
+      function renderCards() {
+        document.querySelectorAll(".dino-card").forEach(button => {
+          const canvas = button.querySelector("canvas"), f = fitCanvas(canvas), s = C.species(button.dataset.dino);
+          const scale = Math.min(f.width / 188, f.height / (s.shape === "brachio" ? 184 : 142));
+          dino(f.g, f.width * .48, f.height - 10, s.id, scale, 1);
+        });
+      }
+      function renderPreview() {
+        const f = fitCanvas($("preview")), g = f.g;
+        if (!f.width) return;
+        g.fillStyle = palette["bg-elevated"]; g.fillRect(0, 0, f.width, f.height);
+        g.save(); g.translate(f.width * .5, f.height * .46); g.scale(f.width / 3100, f.height / 2100); g.translate(-1400, -950);
+        terrain(g, 0, false);
+        const miniTrees = [{ x: 600, y: 950, scale: 2 }, { x: 2150, y: 740, scale: 2.2 }, { x: 1050, y: 530, scale: 1.8 }, { x: 2310, y: 1000, scale: 1.5 }, { x: 490, y: 1230, scale: 1.7 }];
+        miniTrees.forEach(t => tree(g, Object.assign({ required: 1 }, t), 0));
+        g.restore();
+        g.save();
+        g.translate(f.width * .73, f.height * .43);
+        const mountainScale = Math.min(f.width / 1120, f.height / 530);
+        g.scale(mountainScale, mountainScale);
+        g.translate(-C.MAP.volcano.x, -C.MAP.volcano.y);
+        volcano(g, true);
+        g.restore();
+        const s = C.species(selected), scale = Math.min(f.height / (s.shape === "brachio" ? 280 : 235), f.width / 500);
+        dino(g, f.width * .39, f.height * .80, selected, scale, 1, 0, false, 0, 0);
+        if (s.diet === "plants") {
+          g.save(); g.translate(f.width * .70, f.height * .80); g.scale(.55, .55); bush(g, { x: 0, y: 0, hiddenUntil: 0 }, 0); g.restore();
+        } else {
+          dino(g, f.width * .79, f.height * .69, "compy", scale * .40, -1);
+        }
+      }
+      function renderPortrait() {
+        const f = fitCanvas($("player-portrait")), s = C.species(world.player.speciesId);
+        const scale = Math.min(f.width / 160, f.height / (s.shape === "brachio" ? 185 : 130));
+        dino(f.g, f.width * .43, f.height - 7, s.id, scale, 1);
+      }
+      function renderMiniMap() {
+        const f = fitCanvas($("mini-map")), g = f.g;
+        g.save(); g.scale(f.width / C.MAP.width, f.height / C.MAP.height);
+        terrain(g, 0, false); volcano(g, true);
+        ellipse(g, world.player.x, world.player.y, 88, 88, palette.surface);
+        ellipse(g, world.player.x, world.player.y, 54, 54, palette.accent); g.restore();
+      }
+      function resize() {
+        const rect = gameCanvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          cssWidth = rect.width; cssHeight = rect.height;
+          const ratio = Math.min(window.devicePixelRatio || 1, 2);
+          gameCanvas.width = Math.round(cssWidth * ratio); gameCanvas.height = Math.round(cssHeight * ratio);
+          zoom = C.clamp(Math.min(cssWidth / 1090, cssHeight / 650), .65, 1.3);
+        }
+        if (mode === "home") { renderCards(); renderPreview(); }
+        else { renderPortrait(); renderMiniMap(); renderWorld(); }
+      }
+      function icon(name) { return '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+      function buildCards() {
+        $("dino-cards").innerHTML = C.PLAYABLE.map(s =>
+          '<button class="dino-card" data-dino="' + s.id + '" aria-pressed="false" aria-label="' + s.name + ' auswählen. ' + (s.diet === "meat" ? "Fleischfresser" : "Pflanzenfresser") + '">' +
+          '<span class="selected-check">' + icon("check") + '</span><canvas aria-hidden="true"></canvas><strong>' + s.label + '</strong><span class="diet">' + icon(s.diet === "meat" ? "food" : "leaf") +
+          (s.diet === "meat" ? "Fleischfresser" : "Pflanzenfresser") + '</span></button>'
+        ).join("");
+        document.querySelectorAll(".dino-card").forEach(button => {
+          button.addEventListener("click", () => selectDino(button.dataset.dino));
+        });
+      }
+      function selectDino(id) {
+        selected = id;
+        const s = C.species(id), meals = world.progress.dinos[id].meals;
+        document.querySelectorAll(".dino-card").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.dino === id)));
+        $("dino-description").innerHTML = "<strong>" + s.name + ".</strong> " + s.fact + (meals ? " Deine Kraft: " + C.strength(meals) + "." : " Du startest als kleiner Dino.");
+        $("start-button").innerHTML = (meals ? "Weiter auf die Insel" : "Ab auf die Insel") + " " + icon("arrow");
+        renderPreview();
+      }
+      function showToast(text, duration = 2.7) {
+        $("toast").textContent = text; $("toast").hidden = false;
+        toastUntil = performance.now() + duration * 1000;
+        $("announcer").textContent = text;
+      }
+      function audioFailure(error) {
+        console.error("Dinoinsel: Ton konnte nicht abgespielt werden.", error);
+        world.progress.sound = false; updateSoundButton(); persist();
+        showToast("Ton ist auf diesem Gerät gerade nicht möglich.");
+      }
+      function playSound(type) {
+        if (!world.progress.sound) return;
+        try {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) throw new Error("Web Audio wird nicht unterstützt.");
+          if (!audio) audio = new AudioCtor();
+          if (audio.state === "suspended") audio.resume().catch(audioFailure);
+          const t = audio.currentTime, count = type === "achievement" ? 4 : 2;
+          for (let i = 0; i < count; i++) {
+            const osc = audio.createOscillator(), gain = audio.createGain();
+            osc.type = "sine"; osc.frequency.value = (type === "push" ? 180 : 440) * Math.pow(1.25, i);
+            gain.gain.setValueAtTime(0, t + i * .095); gain.gain.linearRampToValueAtTime(.045, t + i * .095 + .012);
+            gain.gain.exponentialRampToValueAtTime(.001, t + i * .095 + .16);
+            osc.connect(gain); gain.connect(audio.destination); osc.start(t + i * .095); osc.stop(t + i * .095 + .18);
+          }
+        } catch (error) { audioFailure(error); }
+      }
+      function updateSoundButton() {
+        $("sound-button").innerHTML = icon(world.progress.sound ? "sound" : "muted");
+        $("sound-button").setAttribute("aria-label", world.progress.sound ? "Ton ausschalten" : "Ton einschalten");
+        $("sound-button").setAttribute("aria-pressed", String(world.progress.sound));
+      }
+      function handleEvents() {
+        for (const event of world.drainEvents()) {
+          if (event.type === "npc-eat") continue;
+          showToast(event.text, event.type === "achievement" ? 5 : 2.7);
+          if (["eat", "clear", "discover", "achievement"].includes(event.type)) persist();
+          if (event.type !== "hint") playSound(event.type);
+        }
+      }
+      function updateHud() {
+        $("strength").textContent = world.playerStrength();
+        $("size").textContent = Math.round(world.playerScale() * 100) + " %";
+        $("growth-fill").style.width = (10 + Math.min(90, Math.log2(1 + world.player.meals) * 18)) + "%";
+        $("mission-text").textContent = world.mission();
+        const target = world.foodTarget(), obstacle = world.obstacleTarget();
+        $("eat-button").classList.toggle("ready", !!target.item);
+        $("push-button").classList.toggle("ready", !!obstacle && world.playerStrength() >= obstacle.required);
+        if (saveError) $("hint").textContent = "Speichern nicht möglich. Bitte lasse die App geöffnet.";
+        else if (target.item) $("hint").innerHTML = target.meat ? "<strong>" + C.species(target.item.speciesId).name + "</strong> ist kleiner als du. Tippe auf Essen!" : "<strong>Leckere Blätter und Beeren!</strong><br>Tippe auf Essen.";
+        else if (obstacle) $("hint").innerHTML = "<strong>" + (obstacle.kind === "tree" ? "Dieser Baum" : "Dieser Stein") + " braucht Kraft " + obstacle.required + ".</strong><br>" + (world.playerStrength() >= obstacle.required ? "Tippe auf Schubsen." : "Mit jedem Essen bekommst du mehr Kraft.");
+        else $("hint").innerHTML = target.meat ? "Suche <strong>kleinere Dinos</strong>.<br>Mit jedem Essen wächst du." : "Suche <strong>grüne Futterbüsche</strong>.<br>Mit jedem Essen wächst du.";
+        renderMiniMap();
+      }
+      function resetInput() {
+        keys.clear(); axis = { x: 0, y: 0 };
+        if (pointerId !== null && $("joystick").hasPointerCapture(pointerId)) $("joystick").releasePointerCapture(pointerId);
+        pointerId = null; $("stick-knob").style.transform = "translate(0px, 0px)";
+        world.player.moving = false;
+      }
+      function openScores(event) {
+        if (mode === "play") pause();
+        scoresReturn = mode;
+        scoresOpener = event.currentTarget;
+        resetInput(); persist(); mode = "scores";
+        $("pause-modal").hidden = true;
+        const scores = C.localScores(world.progress);
+        $("score-rows").replaceChildren(...scores.rows.map(row => {
+          const tr = document.createElement("tr");
+          tr.dataset.dino = row.id;
+          const name = document.createElement("th");
+          name.scope = "row"; name.textContent = row.name; tr.appendChild(name);
+          for (const value of [row.meals, row.mathSolved, row.total]) {
+            const td = document.createElement("td"); td.textContent = value; tr.appendChild(td);
+          }
+          return tr;
+        }));
+        $("score-meals").textContent = scores.meals;
+        $("score-maths").textContent = scores.mathSolved;
+        $("score-total").textContent = scores.total;
+        $("home").inert = true; $("game").inert = true;
+        $("scores-modal").hidden = false; $("close-scores-button").focus();
+      }
+      function closeScores() {
+        mode = scoresReturn;
+        $("scores-modal").hidden = true; $("home").inert = false; $("game").inert = false;
+        if (mode === "pause") { $("pause-modal").hidden = false; $("resume-button").focus(); }
+        else if (scoresOpener) scoresOpener.focus();
+        resetInput();
+      }
+      function start() {
+        world.choose(selected); persist(); mode = "play"; resetInput();
+        $("home").hidden = true; $("game").hidden = false; $("pause-modal").hidden = true; $("help-modal").hidden = true;
+        $("player-name").textContent = C.species(selected).name;
+        $("eat-icon").setAttribute("href", C.species(selected).diet === "meat" ? "#i-food" : "#i-leaf");
+        camera.x = world.player.x; camera.y = world.player.y;
+        updateSoundButton(); resize(); updateHud();
+        showToast(world.player.meals ? "Willkommen zurück auf deiner Insel!" : "Hallo, kleiner Dino! Ziehe links den Steuerkreis.", 4.3);
+        lastTime = performance.now();
+      }
+      function pause() {
+        if (mode !== "play") { if (world) persist(); return; }
+        mode = "pause"; resetInput(); persist();
+        $("pause-modal").hidden = false; $("resume-button").focus();
+      }
+      function resume() {
+        mode = "play"; $("pause-modal").hidden = true; $("help-modal").hidden = true;
+        resetInput(); lastTime = performance.now();
+        $("pause-button").focus();
+      }
+      function goHome() {
+        persist(); resetInput(); mode = "home"; selected = world.player.speciesId;
+        $("game").hidden = true; $("pause-modal").hidden = true; $("help-modal").hidden = true; $("home").hidden = false;
+        selectDino(selected); resize(); $("start-button").focus();
+      }
+      function action(kind) {
+        if (mode !== "play") return;
+        if (kind === "eat") world.eat(); else world.push();
+        handleEvents(); updateHud();
+      }
+      function onStick(event) {
+        if (mode !== "play") return;
+        const rect = $("joystick").getBoundingClientRect(), range = rect.width * .32;
+        let x = event.clientX - rect.left - rect.width / 2, y = event.clientY - rect.top - rect.height / 2;
+        const length = Math.hypot(x, y);
+        if (length > range) { x *= range / length; y *= range / length; }
+        axis = length < 5 ? { x: 0, y: 0 } : { x: x / range, y: y / range };
+        $("stick-knob").style.transform = "translate(" + x + "px, " + y + "px)";
+      }
+      function loop(timestamp) {
+        const dt = Math.min(.05, Math.max(0, (timestamp - (lastTime || timestamp)) / 1000)); lastTime = timestamp;
+        if (mode === "play") {
+          const keyX = (keys.has("ArrowRight") || keys.has("KeyD") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("KeyA") ? 1 : 0);
+          const keyY = (keys.has("ArrowDown") || keys.has("KeyS") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("KeyW") ? 1 : 0);
+          world.update(dt, { x: axis.x || keyX, y: axis.y || keyY });
+          const smoothing = reducedMotion ? 1 : 1 - Math.exp(-dt * 9);
+          camera.x += (world.player.x - camera.x) * smoothing; camera.y += (world.player.y - camera.y) * smoothing;
+          handleEvents(); uiClock += dt; saveClock += dt;
+          if (uiClock > .16) { updateHud(); uiClock = 0; }
+          if (saveClock > 5) { persist(); saveClock = 0; }
+          if (!$("toast").hidden && timestamp > toastUntil) $("toast").hidden = true;
+          renderWorld();
+        }
+        requestAnimationFrame(loop);
+      }
+      function handleBack() {
+        if (mode === "scores") { closeScores(); return true; }
+        if (mode === "help") { mode = "pause"; $("help-modal").hidden = true; $("pause-modal").hidden = false; $("resume-button").focus(); return true; }
+        if (mode === "play") { pause(); return true; }
+        if (mode === "pause") { resume(); return true; }
+        persist(); return false;
+      }
+      function bind() {
+        $("start-button").addEventListener("click", start);
+        ["home-scores-button", "scores-button", "pause-scores-button"].forEach(id => $(id).addEventListener("click", openScores));
+        $("close-scores-button").addEventListener("click", closeScores);
+        [["eat-button", "eat"], ["push-button", "push"]].forEach(pair => {
+          $(pair[0]).addEventListener("pointerdown", event => {
+            if (event.button !== 0) return;
+            event.preventDefault();
+            action(pair[1]);
+          });
+          $(pair[0]).addEventListener("click", event => {
+            if (event.detail === 0) action(pair[1]);
+          });
+        });
+        $("pause-button").addEventListener("click", pause);
+        $("resume-button").addEventListener("click", resume);
+        $("change-button").addEventListener("click", goHome);
+        $("help-button").addEventListener("click", () => {
+          mode = "help"; $("pause-modal").hidden = true; $("help-modal").hidden = false; $("close-help-button").focus();
+        });
+        $("close-help-button").addEventListener("click", () => handleBack());
+        $("sound-button").addEventListener("click", () => {
+          world.progress.sound = !world.progress.sound;
+          updateSoundButton(); if (world.progress.sound) playSound("eat"); persist();
+        });
+        $("joystick").addEventListener("pointerdown", event => {
+          if (mode !== "play" || pointerId !== null) return;
+          event.preventDefault(); pointerId = event.pointerId; $("joystick").setPointerCapture(pointerId); onStick(event);
+        });
+        $("joystick").addEventListener("pointermove", event => { if (event.pointerId === pointerId) onStick(event); });
+        ["pointerup", "pointercancel", "lostpointercapture"].forEach(name => {
+          $("joystick").addEventListener(name, event => {
+            if (event.pointerId === pointerId) { pointerId = null; axis = { x: 0, y: 0 }; $("stick-knob").style.transform = "translate(0px, 0px)"; }
+          });
+        });
+        window.addEventListener("keydown", event => {
+          if (event.code === "Escape") { event.preventDefault(); if (!event.repeat) handleBack(); return; }
+          if (mode !== "play") return;
+          if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyE", "KeyF"].includes(event.code)) event.preventDefault();
+          keys.add(event.code);
+          if (!event.repeat && ["Space", "KeyE"].includes(event.code)) action("eat");
+          if (!event.repeat && event.code === "KeyF") action("push");
+        });
+        window.addEventListener("keyup", event => keys.delete(event.code));
+        window.addEventListener("blur", () => { resetInput(); if (mode === "play") pause(); });
+        window.addEventListener("resize", () => { resetInput(); resize(); });
+        document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+        window.addEventListener("pagehide", () => { pause(); persist(); });
+        $("game").addEventListener("contextmenu", event => event.preventDefault());
+        document.addEventListener("keydown", event => {
+          if (event.code !== "Tab" || !["pause", "help", "scores"].includes(mode)) return;
+          const modal = $(mode + "-modal");
+          const buttons = Array.from(modal.querySelectorAll("button")), first = buttons[0], last = buttons[buttons.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        });
+      }
+      try {
+        if (!ctx) throw new Error("Dein Android System WebView unterstützt keine 2D-Zeichenfläche.");
+        readPalette();
+        world = new C.World(readProgress());
+        selected = world.player.speciesId;
+        buildCards(); selectDino(selected); bind(); resize(); updateSoundButton();
+        window.dinoApp = {
+          pause, handleBack,
+          snapshot: () => ({
+            mode, species: world.player.speciesId, strength: world.playerStrength(), scale: world.playerScale(),
+            x: world.player.x, y: world.player.y, time: world.time, volcanoDormant: C.MAP.volcano.dormant,
+            meals: world.player.meals, saved: !saveError, sound: world.progress.sound,
+            obstaclesCleared: world.progress.cleared.length, mission: world.mission(), scores: C.localScores(world.progress)
+          })
+        };
+        requestAnimationFrame(loop);
+      } catch (error) {
+        console.error("Dinoinsel konnte nicht starten.", error);
+        const alert = document.createElement("div"); alert.className = "fatal"; alert.setAttribute("role", "alert");
+        const heading = document.createElement("h2"); heading.textContent = "Dinoinsel konnte nicht starten.";
+        const detail = document.createElement("p"); detail.textContent = error.message;
+        const help = document.createElement("p"); help.textContent = "Bitte aktualisiere Android System WebView und öffne die App erneut.";
+        alert.append(heading, detail, help); document.body.appendChild(alert);
+      }
+    })();
+  </script>
+</body>
+</html>

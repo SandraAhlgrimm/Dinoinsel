@@ -1,0 +1,15 @@
+{
+  "name": "dino-insel-checks",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test core.test.cjs native-shell.test.cjs",
+    "test:browser": "node browser.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}
