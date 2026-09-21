@@ -2,11 +2,13 @@ plugins {
     id("com.android.application") version "8.9.1"
 }
 
-val gradleManifestDirectory = layout.buildDirectory.dir("gradle-manifest")
-val prepareGradleManifest by tasks.registering(Copy::class) {
-    from("src/main/AndroidManifest.xml")
-    into(gradleManifestDirectory)
-    filter { line -> line.replace("package=\"de.dinoinsel.game\"", "") }
+val gradleInputs = layout.buildDirectory.dir("gradle-inputs")
+val prepareGradleInputs by tasks.registering(Exec::class) {
+    inputs.files("runtime_config.py", "../game/index.html", "src/main/AndroidManifest.xml")
+    inputs.file("src/main/assets/native-network.js")
+    outputs.dir(gradleInputs)
+    environment("PYTHONDONTWRITEBYTECODE", "1")
+    commandLine("python3", "runtime_config.py", "--gradle")
 }
 
 android {
@@ -17,13 +19,13 @@ android {
         applicationId = "de.dinoinsel.game"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.2"
     }
 
-    sourceSets["main"].assets.srcDir("../game")
+    sourceSets["main"].assets.setSrcDirs(listOf(gradleInputs.map { it.dir("assets") }))
     sourceSets["main"].manifest.srcFile(
-        gradleManifestDirectory.map { it.file("AndroidManifest.xml") }
+        gradleInputs.map { it.file("AndroidManifest.xml") }
     )
 
     compileOptions {
@@ -42,6 +44,6 @@ android {
     }
 
     tasks.named("preBuild") {
-        dependsOn(prepareGradleManifest)
+        dependsOn(prepareGradleInputs)
     }
 }

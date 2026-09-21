@@ -14,4 +14,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "DinoInsel"
+rootProject.name = "Dinoinsel"

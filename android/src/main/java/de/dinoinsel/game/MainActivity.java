@@ -14,8 +14,11 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
+import android.webkit.ServiceWorkerController;
+import android.webkit.ServiceWorkerWebSettings;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -34,19 +37,23 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public final class MainActivity extends Activity {
     // A fixed HTTPS origin gives localStorage a stable home without a server or file access.
-    private static final String LOCAL_ORIGIN = "https://dino-insel.invalid/";
+    private static final String LOCAL_ORIGIN = NetworkPolicy.LOCAL_ORIGIN;
     private static final String PAUSE_SCRIPT =
             "(function(){try{if(window.dinoApp&&typeof window.dinoApp.pause==='function')"
                     + "window.dinoApp.pause();}catch(e){"
-                    + "console.error('Dino Insel: Pausieren und Speichern fehlgeschlagen.',e);}})();";
+                    + "console.error('Dinoinsel: Pausieren und Speichern fehlgeschlagen.',e);}})();";
     private static final String BACK_SCRIPT =
             "(function(){try{if(window.dinoApp&&typeof window.dinoApp.handleBack==='function')"
                     + "return window.dinoApp.handleBack();}catch(e){"
-                    + "console.error('Dino Insel: Zurueck-Aktion fehlgeschlagen.',e);}return null;})();";
+                    + "console.error('Dinoinsel: Zurueck-Aktion fehlgeschlagen.',e);}return null;})();";
 
     private WebView webView;
+    private NetworkPolicy networkPolicy;
     private boolean resumed;
     private boolean backPending;
     private Runnable unregisterBack;
@@ -54,6 +61,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        networkPolicy = readNetworkPolicy();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout container = new FrameLayout(this);
         container.setBackgroundColor(Color.rgb(221, 241, 208));
@@ -77,8 +85,10 @@ public final class MainActivity extends Activity {
             unregisterBack = ModernBack.register(this, this::handleBack);
         }
         hideSystemBars();
+        String protectedHtml = networkPolicy.protectHtml(
+                readAsset("index.html"), readAsset("native-network.js"));
         webView.loadDataWithBaseURL(
-                LOCAL_ORIGIN, readGame(), "text/html", "UTF-8", LOCAL_ORIGIN);
+                LOCAL_ORIGIN, protectedHtml, "text/html", "UTF-8", LOCAL_ORIGIN);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -95,7 +105,7 @@ public final class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
-        settings.setBlockNetworkLoads(true);
+        settings.setBlockNetworkLoads(!networkPolicy.isNetworkEnabled());
         settings.setBlockNetworkImage(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
@@ -110,6 +120,13 @@ public final class MainActivity extends Activity {
         settings.setTextZoom(100);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
+        CookieManager.getInstance().setAcceptCookie(false);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(view, false);
+        ServiceWorkerWebSettings workerSettings = ServiceWorkerController.getInstance()
+                .getServiceWorkerWebSettings();
+        workerSettings.setBlockNetworkLoads(true);
+        workerSettings.setAllowContentAccess(false);
+        workerSettings.setAllowFileAccess(false);
         view.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView source, WebResourceRequest request) {
@@ -128,7 +145,11 @@ public final class MainActivity extends Activity {
                 if ("data".equals(scheme) || "blob".equals(scheme) || "about".equals(scheme)) {
                     return null;
                 }
-                return new WebResourceResponse("text/plain", "UTF-8", 403, "Offline only",
+                if (networkPolicy.allowsRequest(request.getUrl().toString(), request.getMethod(),
+                        request.isForMainFrame())) {
+                    return null;
+                }
+                return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked by app policy",
                         Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
             }
 
@@ -160,8 +181,22 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private String readGame() {
-        try (InputStream input = getAssets().open("index.html");
+    private NetworkPolicy readNetworkPolicy() {
+        try {
+            JSONObject config = new JSONObject(readAsset("runtime-config.json"));
+            Object origin = config.get("leaderboardApiUrl");
+            if (config.length() != 1 || !(origin instanceof String)) {
+                throw new IllegalArgumentException("Invalid embedded runtime configuration.");
+            }
+            return new NetworkPolicy((String) origin);
+        } catch (JSONException exception) {
+            throw new IllegalStateException("Die eingebettete Netzwerkkonfiguration ist ungültig.",
+                    exception);
+        }
+    }
+
+    private String readAsset(String name) {
+        try (InputStream input = getAssets().open(name);
                 ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[8192];
             int count;
@@ -170,7 +205,7 @@ public final class MainActivity extends Activity {
             }
             return new String(output.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
-            throw new IllegalStateException("Die Spieldatei fehlt in dieser Installation.", exception);
+            throw new IllegalStateException("Die eingebettete Datei fehlt: " + name, exception);
         }
     }
 
