@@ -6,8 +6,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test core.test.cjs native-shell.test.cjs",
-    "test:browser": "node browser.test.cjs"
+    "test": "node --test core.test.cjs math.test.cjs native-shell.test.cjs",
+    "test:browser": "node browser.test.cjs && node math-browser.test.cjs"
   },
   "devDependencies": {
     "playwright": "1.58.2"

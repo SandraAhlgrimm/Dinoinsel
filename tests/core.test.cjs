@@ -11,7 +11,20 @@ new Function("module", coreSource)(exported);
 const C = exported.exports;
 
 function advance(world, seconds, input = { x: 0, y: 0 }) {
-  for (let elapsed = 0; elapsed < seconds - 1e-8; elapsed += .05) world.update(.05, input);
+  for (let elapsed = 0; elapsed < seconds - 1e-8; elapsed += .05) {
+    solveCompulsory(world);
+    world.update(.05, input);
+  }
+}
+
+function solveCompulsory(world) {
+  const task = world.progress.math.pending;
+  if (!task) return;
+  if (!task.completed) {
+    for (const digit of String(C.mathResult(task))) world.editMath(digit);
+    assert.equal(world.answerMath(), "correct");
+  }
+  assert.equal(world.finishMath(), true);
 }
 
 function moveNextTo(world, item) {
@@ -62,6 +75,7 @@ test("every carnivore meal makes the player strictly bigger and stronger", () =>
   const prey = world.npcs[0];
   world.npcs = [prey];
   for (let meal = 0; meal < 150; meal++) {
+    solveCompulsory(world);
     const before = world.playerScale();
     prey.x = world.player.x + 60; prey.y = world.player.y;
     prey.hiddenUntil = 0; prey.scale = .5;
@@ -304,10 +318,12 @@ test("the volcano stays dormant through prolonged simulation and discovery", () 
   assert.equal(world.progress.stats.volcano, true);
   assert.ok(world.drainEvents().some(e => e.type === "discover"));
   for (let i = 0; i < 6000; i++) {
+    solveCompulsory(world);
     world.update(.05);
     assert.ok(world.drainEvents().every(e => !/erupt|lava|attack-player/.test(e.type)));
   }
   assert.equal(C.MAP.volcano.dormant, true);
+  assert.ok(world.progress.stats.mathSolved >= 3, "long simulations really solve their compulsory tasks");
   assert.ok(Object.isFrozen(C.MAP.volcano));
 });
 
@@ -334,6 +350,8 @@ test("old progress migrates without changing growth, position or cleared obstacl
   const world = new C.World();
   world.eat();
   const old = world.save();
+  old.version = 1;
+  delete old.math;
   for (const dino of Object.values(old.dinos)) delete dino.mathSolved;
   delete old.stats.mathSolved;
   const source = JSON.stringify(old);

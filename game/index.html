@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-  <meta name="description" content="Ein freundliches Offline-Dino-Abenteuer: wachsen, entdecken und Bäume umschubsen.">
+  <meta name="description" content="Dinoinsel: wachsen, entdecken und kleine Mathepausen lösen. Ohne Werbung, mit lokalen Punkten.">
   <title>Dinoinsel</title>
   <script>
     (() => {
@@ -68,7 +68,7 @@
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-    body, button {
+    body, button, input {
       font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--cp-text);
     }
@@ -177,6 +177,30 @@
     .score-table th:first-child { text-align: left; }
     .score-table tfoot { font-weight: 800; color: var(--cp-accent); }
     .score-table caption { text-align: left; color: var(--cp-text-muted); margin: 12px 0; line-height: 1.5; }
+    .math-panel { width: 700px; text-align: left; padding: 24px; }
+    .math-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .math-heading h2 { margin: 4px 0; }
+    .math-heading button { min-height: 48px; padding: 10px 16px; }
+    .math-content { display: grid; grid-template-columns: 1fr 240px; gap: 24px; margin-top: 12px; align-items: start; }
+    #math-question { font-size: clamp(30px, 5vw, 44px); font-weight: 850; color: var(--cp-text); margin: 6px 0 14px; line-height: 1.2; }
+    #math-answer { display: block; width: 100%; max-width: 240px; height: 60px; margin: 6px 0; padding: 8px 12px; border: 2px solid var(--cp-accent); border-radius: 10px; background: var(--cp-bg-elevated); color: var(--cp-text); font-size: 30px; font-weight: 750; }
+    #math-answer:focus-visible { outline: 3px solid var(--cp-accent); outline-offset: 3px; }
+    #math-feedback { min-height: 44px; margin: 12px 0; }
+    #math-hint-button { min-height: 48px; padding: 12px 16px; }
+    #math-hint { border-left: 3px solid var(--cp-accent); padding-left: 12px; }
+    #math-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    #math-keypad button { min-height: 58px; font-size: 24px; padding: 10px 4px; }
+    #math-keypad .key-word { font-size: 13px; }
+    #math-check-button { grid-column: 1 / -1; font-size: 18px !important; }
+    #math-continue-button { width: 100%; min-height: 60px; padding: 14px; font-size: 19px; }
+    #math-save-note { color: var(--cp-danger); border: 1px solid var(--cp-danger); padding: 10px; border-radius: 10px; }
+    @media (max-width: 560px) {
+      .math-content { grid-template-columns: 1fr; gap: 12px; }
+      .math-panel { padding: 16px; }
+      #math-keypad button { min-height: 48px; }
+      .score-table { font-size: 12px; }
+      .score-table th, .score-table td { padding: 10px 4px; }
+    }
     .fatal { position: fixed; inset: 20px; z-index: 50; background: var(--cp-surface); border: 2px solid var(--cp-danger); border-radius: 16px; padding: 24px; }
     @media (max-height: 690px) and (min-width: 761px) {
       .home-header { padding: 14px 28px 6px; }
@@ -342,6 +366,7 @@
       <div class="modal-buttons">
         <button id="resume-button" class="primary">Weiterspielen</button>
         <button id="help-button">So spielst du</button>
+        <button id="practice-button">Mathe üben</button>
         <button id="pause-scores-button">Meine Bestenliste</button>
         <button id="change-button">Einen anderen Dino wählen</button>
       </div>
@@ -356,6 +381,7 @@
         <div class="help-step"><svg><use href="#i-leaf"/></svg><div><strong>Futter macht groß.</strong>Gehe nah heran und tippe auf „Essen“. Pflanzenfresser mögen Büsche. Fleischfresser fressen kleinere Dinos.</div></div>
         <div class="help-step"><svg><use href="#i-push"/></svg><div><strong>Mach den Weg frei.</strong>Mit „Schubsen“ fallen Bäume um und zerbrechen Steine. Manche brauchen mehr Kraft oder mehrere Schubser.</div></div>
         <div class="help-step"><svg><use href="#i-volcano"/></svg><div><strong>Du bist sicher.</strong>Niemand frisst deinen Dino. Der Vulkan bricht niemals aus. Du kannst nicht verlieren.</div></div>
+        <div class="help-step"><svg><use href="#i-star"/></svg><div><strong>Eine kleine Mathepause.</strong>Nach vier Mahlzeiten oder etwa 90 Sekunden Spielzeit rechnest du kurz. Alle Dinos warten. Löse die Aufgabe, dann geht es mit „Weiter auf die Insel“ weiter. Tipps helfen dir, Fehler kosten keine Punkte.</div></div>
       </div>
       <p class="keyboard-note">Mit Tastatur: Pfeile oder WASD · E / Leertaste = Essen · F = Schubsen · Esc = Pause</p>
       <div class="modal-buttons"><button id="close-help-button" class="primary">Alles klar!</button></div>
@@ -367,12 +393,44 @@
       <h2 id="scores-title">Meine Bestenliste</h2>
       <p id="scores-privacy">Nur auf diesem Gerät — noch keine gemeinsame Online-Bestenliste</p>
       <table class="score-table">
-        <caption>Eine Mahlzeit = ein Futterpunkt. Eine richtig gelöste Matheaufgabe = ein Mathepunkt. Mathe kommt bald; diese Punkte starten bei null.</caption>
+        <caption>Eine Mahlzeit = ein Futterpunkt. Eine richtig gelöste Matheaufgabe = ein Mathepunkt. Alle Punkte bleiben bei dem Dino, mit dem du sie gesammelt hast.</caption>
         <thead><tr><th scope="col">Dino</th><th scope="col">Futter</th><th scope="col">Mathe</th><th scope="col">Gesamt</th></tr></thead>
         <tbody id="score-rows"></tbody>
         <tfoot><tr><th scope="row">Alle Dinos</th><td id="score-meals">0</td><td id="score-maths">0</td><td id="score-total">0</td></tr></tfoot>
       </table>
       <div class="modal-buttons"><button id="close-scores-button" class="primary">Zurück</button></div>
+    </div>
+  </div>
+  <div id="math-modal" class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="math-title" aria-describedby="math-intro" hidden>
+    <div class="modal math-panel">
+      <div class="math-heading">
+        <div><div class="eyebrow">Ganz ohne Zeitdruck</div><h2 id="math-title">Kleine Mathepause</h2></div>
+        <button id="math-pause-button">Pause / nach Hause</button>
+      </div>
+      <p id="math-intro">Die ganze Insel wartet auf dich. Rechne in Ruhe, dann geht es weiter.</p>
+      <div class="math-content">
+        <div>
+          <p id="math-credit"></p>
+          <p id="math-question"></p>
+          <label for="math-answer">Deine Antwort</label>
+          <input id="math-answer" type="text" inputmode="none" autocomplete="off" readonly aria-describedby="math-question">
+          <p id="math-feedback" role="status" aria-live="polite" tabindex="-1"></p>
+          <button id="math-hint-button">Tipp zeigen</button>
+          <p id="math-hint" aria-live="polite" hidden></p>
+        </div>
+        <div>
+          <div id="math-keypad" role="group" aria-label="Zahlentasten">
+            <button data-digit="1">1</button><button data-digit="2">2</button><button data-digit="3">3</button>
+            <button data-digit="4">4</button><button data-digit="5">5</button><button data-digit="6">6</button>
+            <button data-digit="7">7</button><button data-digit="8">8</button><button data-digit="9">9</button>
+            <button id="math-clear-button" class="key-word">Alles löschen</button><button data-digit="0">0</button>
+            <button id="math-delete-button" class="key-word" aria-label="Letzte Ziffer löschen">Zurück</button>
+            <button id="math-check-button" class="primary">Antwort prüfen</button>
+          </div>
+          <button id="math-continue-button" class="primary" hidden>Weiter auf die Insel</button>
+        </div>
+      </div>
+      <p id="math-save-note" role="alert" hidden></p>
     </div>
   </div>
   <div id="announcer" class="sr-only" aria-live="polite"></div>
@@ -402,6 +460,8 @@
       const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
       const growth = meals => 1 + .12 * Math.log2(1 + meals);
       const strength = meals => 1 + meals;
+      const MATH_RULES = Object.freeze({ meals: 4, seconds: 90 });
+      const validCount = n => Number.isSafeInteger(n) && n >= 0 && n < Number.MAX_SAFE_INTEGER - 1;
       function randomGenerator(seed) {
         let value = seed >>> 0;
         return () => {
@@ -411,17 +471,121 @@
           return ((t ^ t >>> 14) >>> 0) / 4294967296;
         };
       }
+      function emptyMath(issued = 0) {
+        return { issued, mealsSince: 0, activeSeconds: 0, pending: null };
+      }
+      function mathResult(task) {
+        return task.operator === "+" ? task.a + task.b : task.a - task.b;
+      }
+      function generateMathTask(id, dinoId) {
+        if (!validCount(id) || id < 1 || !PLAYABLE.some(s => s.id === dinoId)) throw new Error("Ungültige Matheaufgabe.");
+        const random = randomGenerator(Math.imul(id, 0x9E3779B1) ^ 0x7319);
+        const large = id % 5 === 0, limit = large ? 100 : 20;
+        const operator = id % 2 ? "+" : "-";
+        const top = (large ? 21 : 0) + Math.floor(random() * (large ? 80 : limit + 1));
+        const part = Math.floor(random() * (top + 1));
+        return {
+          id, dinoId, a: operator === "+" ? part : top, b: operator === "+" ? top - part : part, operator,
+          input: "", attempts: 0, lastAttempt: null, hintLevel: 0, completed: false, credited: false
+        };
+      }
+      function scheduleMath(progress, { seconds = 0, meal = false, active = false, manual = false } = {}, dinoId = progress.selected) {
+        if (!Number.isFinite(seconds) || seconds < 0 || [meal, active, manual].some(v => typeof v !== "boolean")) throw new Error("Ungültiger Mathe-Zeitschritt.");
+        if (!PLAYABLE.some(s => s.id === dinoId)) throw new Error("Unbekannter Mathe-Dino.");
+        if (progress.math.pending || (!active && !manual)) return progress;
+        const math = { ...progress.math };
+        if (active) {
+          math.activeSeconds = Math.min(MATH_RULES.seconds, math.activeSeconds + seconds);
+          math.mealsSince = Math.min(MATH_RULES.meals, math.mealsSince + (meal ? 1 : 0));
+        }
+        if (manual || math.mealsSince >= MATH_RULES.meals || math.activeSeconds >= MATH_RULES.seconds - 1e-8) {
+          math.issued++;
+          math.pending = generateMathTask(math.issued, dinoId);
+        }
+        return { ...progress, math };
+      }
+      function editMathInput(progress, key) {
+        if (typeof key !== "string" || (!/^\d$/.test(key) && !["Backspace", "Clear"].includes(key))) throw new Error("Ungültige Mathe-Eingabe.");
+        const task = progress.math.pending;
+        if (!task || task.completed) return progress;
+        let input = task.input;
+        if (key === "Clear") input = "";
+        else if (key === "Backspace") input = input.slice(0, -1);
+        else if (input.length < 3) input = input === "0" ? key : input + key;
+        return { ...progress, math: { ...progress.math, pending: { ...task, input } } };
+      }
+      function answerMath(progress) {
+        const task = progress.math.pending;
+        if (!task) return { progress, status: "no-task" };
+        if (task.completed) return { progress, status: "already-completed" };
+        if (!task.input) return { progress, status: "empty" };
+        const correct = Number(task.input) === mathResult(task);
+        const pending = { ...task, attempts: task.attempts + 1, lastAttempt: Number(task.input), input: correct ? String(mathResult(task)) : "", completed: correct, credited: correct };
+        if (!validCount(pending.attempts)) throw new Error("Zu viele Matheversuche im Spielstand.");
+        const next = { ...progress, math: { ...progress.math, pending } };
+        if (correct) {
+          const dino = progress.dinos[task.dinoId];
+          next.dinos = { ...progress.dinos, [task.dinoId]: { ...dino, mathSolved: dino.mathSolved + 1 } };
+          next.stats = { ...progress.stats, mathSolved: progress.stats.mathSolved + 1 };
+          if (!validCount(localScores(next).total)) throw new Error("Zu viele Gesamtpunkte im Spielstand.");
+        }
+        return { progress: next, status: correct ? "correct" : "incorrect" };
+      }
+      function revealMathHint(progress) {
+        const task = progress.math.pending;
+        if (!task || task.completed) return progress;
+        return { ...progress, math: { ...progress.math, pending: { ...task, hintLevel: Math.min(2, task.hintLevel + 1) } } };
+      }
+      function mathHint(task, level) {
+        const { a, b, operator } = task, result = mathResult(task);
+        if (level < 2) {
+          return "Starte bei " + a + ". " + (b <= 10
+            ? "Zähle " + b + " Schritte " + (operator === "+" ? "vorwärts" : "rückwärts") + ". Du darfst deine Finger oder Punkte benutzen."
+            : "Zerlege " + b + " in " + Math.floor(b / 10) + " Zehner und " + b % 10 + " Einer. " + (operator === "+" ? "Zähle sie dazu." : "Nimm sie weg."));
+        }
+        const toTen = operator === "+" ? 10 - a % 10 : a % 10 || 10;
+        const first = Math.min(b, toTen);
+        const middle = operator === "+" ? a + first : a - first;
+        return a + " " + operator + " " + first + " = " + middle + ". " +
+          (b > first ? "Dann " + middle + " " + operator + " " + (b - first) + " = " + result + ". " : "") +
+          "Deine Antwort ist " + result + ". Tippe sie ein und prüfe sie.";
+      }
+      function finishMath(progress) {
+        const task = progress.math.pending;
+        if (!task || !task.completed || !task.credited) return progress;
+        return { ...progress, math: emptyMath(progress.math.issued) };
+      }
+      function validateMath(math, stats, dinos) {
+        if (!math || !validCount(math.issued) || !Number.isInteger(math.mealsSince) || math.mealsSince < 0 || math.mealsSince > MATH_RULES.meals ||
+            !Number.isFinite(math.activeSeconds) || math.activeSeconds < 0 || math.activeSeconds > MATH_RULES.seconds) throw new Error("Ungültiger Mathefortschritt im Spielstand.");
+        const task = math.pending;
+        if (task !== null) {
+          if (!task || !validCount(task.id) || task.id < 1 || task.id !== math.issued || !PLAYABLE.some(s => s.id === task.dinoId)) throw new Error("Ungültige gespeicherte Matheaufgabe.");
+          const generated = generateMathTask(task.id, task.dinoId);
+          if (["a", "b", "operator"].some(k => task[k] !== generated[k]) || !validCount(task.attempts) ||
+              typeof task.input !== "string" || !/^\d{0,3}$/.test(task.input) || !Number.isInteger(task.hintLevel) || task.hintLevel < 0 || task.hintLevel > 2 ||
+              typeof task.completed !== "boolean" || task.completed !== task.credited ||
+              (task.lastAttempt !== null && (!Number.isInteger(task.lastAttempt) || task.lastAttempt < 0 || task.lastAttempt > 999)) ||
+              (task.attempts === 0) !== (task.lastAttempt === null)) throw new Error("Ungültige gespeicherte Matheantwort.");
+          if (task.completed && (task.lastAttempt !== mathResult(task) || task.input !== String(mathResult(task)) || dinos[task.dinoId].mathSolved < 1)) throw new Error("Ungültige Mathebelohnung im Spielstand.");
+          if (!task.completed && task.lastAttempt === mathResult(task)) throw new Error("Nicht verbuchte Matheantwort im Spielstand.");
+        } else if (math.mealsSince >= MATH_RULES.meals || math.activeSeconds >= MATH_RULES.seconds) {
+          throw new Error("Eine fällige Mathepause fehlt im Spielstand.");
+        }
+        if (math.issued !== stats.mathSolved + (task && !task.completed ? 1 : 0)) throw new Error("Matheaufgaben und Punkte passen nicht zusammen.");
+        return math;
+      }
       function emptyProgress() {
         const dinos = {};
         PLAYABLE.forEach(s => { dinos[s.id] = { meals: 0, mathSolved: 0 }; });
         return {
-          version: 1, selected: "trex", dinos, cleared: [], position: { x: MAP.startX, y: MAP.startY },
-          stats: { meals: 0, mathSolved: 0, trees: 0, rocks: 0, volcano: false, celebrated: false }, sound: false
+          version: 2, selected: "trex", dinos, cleared: [], position: { x: MAP.startX, y: MAP.startY },
+          stats: { meals: 0, mathSolved: 0, trees: 0, rocks: 0, volcano: false, celebrated: false }, sound: false, math: emptyMath()
         };
       }
       function validateProgress(data) {
-        if (!data || data.version !== 1 || !PLAYABLE.some(s => s.id === data.selected)) throw new Error("Unbekanntes Spielstand-Format.");
-        const count = n => Number.isSafeInteger(n) && n >= 0 && n < Number.MAX_SAFE_INTEGER - 1;
+        if (!data || ![1, 2].includes(data.version) || !PLAYABLE.some(s => s.id === data.selected)) throw new Error("Unbekanntes Spielstand-Format.");
+        const count = validCount;
         if (!data.dinos || !PLAYABLE.every(s => data.dinos[s.id] && count(data.dinos[s.id].meals))) throw new Error("Ungültige Dino-Größen im Spielstand.");
         if (!Array.isArray(data.cleared) || data.cleared.length > 88 || data.cleared.some(id => typeof id !== "string" || !/^(tree|rock)-\d+$/.test(id))) throw new Error("Ungültige Hindernisse im Spielstand.");
         if (new Set(data.cleared).size !== data.cleared.length) throw new Error("Doppelte Hindernisse im Spielstand.");
@@ -435,13 +599,16 @@
         const migrated = JSON.parse(JSON.stringify(data));
         for (const s of PLAYABLE) {
           const dino = migrated.dinos[s.id];
-          if (dino.mathSolved === undefined) dino.mathSolved = 0;
+          if (dino.mathSolved === undefined && data.version === 1) dino.mathSolved = 0;
           if (!count(dino.mathSolved) || !count(dino.meals + dino.mathSolved)) throw new Error("Ungültige Dino-Punkte im Spielstand.");
         }
         const scores = localScores(migrated);
         if (!count(scores.total)) throw new Error("Ungültige Gesamtpunkte im Spielstand.");
-        if (migrated.stats.mathSolved === undefined) migrated.stats.mathSolved = scores.mathSolved;
+        if (migrated.stats.mathSolved === undefined && data.version === 1) migrated.stats.mathSolved = scores.mathSolved;
         if (migrated.stats.mathSolved !== scores.mathSolved) throw new Error("Ungültige Mathepunkte im Spielstand.");
+        if (migrated.math === undefined && data.version === 1) migrated.math = emptyMath(scores.mathSolved);
+        validateMath(migrated.math, migrated.stats, migrated.dinos);
+        migrated.version = 2;
         return migrated;
       }
       function localScores(progress) {
@@ -612,6 +779,7 @@
         }
         emit(type, text) { this.events.push({ type, text }); }
         eat() {
+          if (this.progress.math.pending) return { ok: false, reason: "math-pending" };
           if (this.eatCooldown > 0) return { ok: false, reason: "cooldown" };
           const target = this.foodTarget();
           if (!target.item) {
@@ -632,9 +800,11 @@
           this.puff(item.x, item.y - 32, "food", "+1 Kraft");
           this.emit("eat", "Lecker! Du bist größer und stärker.");
           this.checkGoals();
+          this.advanceMath({ active: true, meal: true });
           return { ok: true, id: item.id, strength: this.playerStrength(), scale: this.playerScale() };
         }
         push() {
+          if (this.progress.math.pending) return { ok: false, reason: "math-pending" };
           if (this.pushCooldown > 0) return { ok: false, reason: "cooldown" };
           const item = this.obstacleTarget();
           if (!item) {
@@ -735,6 +905,9 @@
         update(dt, input = { x: 0, y: 0 }) {
           if (!Number.isFinite(dt) || dt < 0 || dt > .25) throw new RangeError("Ungültiger Zeitschritt.");
           if (!Number.isFinite(input.x) || !Number.isFinite(input.y)) throw new TypeError("Ungültige Steuerung.");
+          if (this.progress.math.pending) return;
+          this.advanceMath({ active: true, seconds: dt });
+          if (this.progress.math.pending) return;
           this.time += dt;
           this.eatCooldown = Math.max(0, this.eatCooldown - dt);
           this.pushCooldown = Math.max(0, this.pushCooldown - dt);
@@ -756,13 +929,36 @@
           }
         }
         drainEvents() { return this.events.splice(0); }
+        advanceMath(activity) {
+          const pending = this.progress.math.pending;
+          this.progress = scheduleMath(this.progress, activity, this.player.speciesId);
+          if (!pending && this.progress.math.pending) {
+            this.player.moving = false;
+            this.emit("math", "Zeit für eine kleine Mathepause. Die Insel wartet.");
+          }
+        }
+        practiceMath() { this.advanceMath({ manual: true }); }
+        editMath(key) { this.progress = editMathInput(this.progress, key); }
+        answerMath() {
+          const result = answerMath(this.progress);
+          this.progress = result.progress;
+          return result.status;
+        }
+        revealMathHint() { this.progress = revealMathHint(this.progress); }
+        finishMath() {
+          const next = finishMath(this.progress), finished = next !== this.progress;
+          this.progress = next;
+          return finished;
+        }
         save() {
           this.progress.position = { x: this.player.x, y: this.player.y };
           this.progress.dinos[this.player.speciesId].meals = this.player.meals;
           return validateProgress(this.progress);
         }
       }
-      return { SPECIES, PLAYABLE, MAP, World, species, growth, strength, clamp, distance, randomGenerator, emptyProgress, validateProgress, localScores, terrainAllows };
+      return { SPECIES, PLAYABLE, MAP, World, MATH_RULES, species, growth, strength, clamp, distance, randomGenerator,
+        emptyProgress, validateProgress, localScores, terrainAllows, emptyMath, generateMathTask, mathResult,
+        scheduleMath, editMathInput, answerMath, revealMathHint, mathHint, finishMath };
     })();
     if (typeof module !== "undefined" && module.exports) module.exports = DinoCore;
   </script>
@@ -781,6 +977,7 @@
       let pointerId = null, axis = { x: 0, y: 0 }, audio = null, saveError = "", inputError = false;
       let scoresReturn = "home", scoresOpener = null;
       const keys = new Set();
+      const blockedKeys = new Set();
       const gameCanvas = $("world"), ctx = gameCanvas.getContext("2d");
       const grassRandom = C.randomGenerator(8319);
       const decorations = [];
@@ -799,6 +996,8 @@
         $("save-warning").textContent = message;
         $("save-warning").hidden = false;
         $("pause-save-note").textContent = "Speichern ist gerade nicht möglich. Dein Fortschritt bleibt nur erhalten, solange die App geöffnet ist.";
+        $("math-save-note").textContent = "Speichern ist gerade nicht möglich. Bitte lasse die App geöffnet, damit deine Aufgabe und Punkte erhalten bleiben.";
+        $("math-save-note").hidden = false;
         if (error) console.error("Dinoinsel: " + message, error);
       }
       function readProgress() {
@@ -817,6 +1016,7 @@
           localStorage.setItem(SAVE_KEY, JSON.stringify(world.save()));
           saveError = "";
           $("save-warning").hidden = true;
+          $("math-save-note").hidden = true;
           $("pause-save-note").innerHTML = "Deine Insel wartet auf dich.<br>Dein Fortschritt ist gespeichert.";
           return true;
         } catch (error) {
@@ -1195,7 +1395,7 @@
           gameCanvas.width = Math.round(cssWidth * ratio); gameCanvas.height = Math.round(cssHeight * ratio);
           zoom = C.clamp(Math.min(cssWidth / 1090, cssHeight / 650), .65, 1.3);
         }
-        if (mode === "home") { renderCards(); renderPreview(); }
+        if (!$("home").hidden) { renderCards(); renderPreview(); }
         else { renderPortrait(); renderMiniMap(); renderWorld(); }
       }
       function icon(name) { return '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
@@ -1252,6 +1452,7 @@
       function handleEvents() {
         for (const event of world.drainEvents()) {
           if (event.type === "npc-eat") continue;
+          if (event.type === "math") { persist(); showMath(); continue; }
           showToast(event.text, event.type === "achievement" ? 5 : 2.7);
           if (["eat", "clear", "discover", "achievement"].includes(event.type)) persist();
           if (event.type !== "hint") playSound(event.type);
@@ -1272,17 +1473,27 @@
         renderMiniMap();
       }
       function resetInput() {
+        keys.forEach(key => blockedKeys.add(key));
         keys.clear(); axis = { x: 0, y: 0 };
         if (pointerId !== null && $("joystick").hasPointerCapture(pointerId)) $("joystick").releasePointerCapture(pointerId);
         pointerId = null; $("stick-knob").style.transform = "translate(0px, 0px)";
         world.player.moving = false;
       }
+      function setMode(next, focusId) {
+        mode = next; resetInput();
+        const homeVisible = mode === "home" || (mode === "scores" && scoresReturn === "home");
+        $("home").hidden = !homeVisible; $("game").hidden = homeVisible;
+        $("home").inert = mode !== "home"; $("game").inert = mode !== "play";
+        for (const name of ["pause", "help", "scores", "math"]) $(name + "-modal").hidden = mode !== name;
+        if (mode === "play") lastTime = performance.now();
+        if (focusId) $(focusId).focus();
+      }
       function openScores(event) {
+        if (!["home", "pause", "play"].includes(mode)) return;
         if (mode === "play") pause();
         scoresReturn = mode;
         scoresOpener = event.currentTarget;
-        resetInput(); persist(); mode = "scores";
-        $("pause-modal").hidden = true;
+        persist();
         const scores = C.localScores(world.progress);
         $("score-rows").replaceChildren(...scores.rows.map(row => {
           const tr = document.createElement("tr");
@@ -1297,39 +1508,69 @@
         $("score-meals").textContent = scores.meals;
         $("score-maths").textContent = scores.mathSolved;
         $("score-total").textContent = scores.total;
-        $("home").inert = true; $("game").inert = true;
-        $("scores-modal").hidden = false; $("close-scores-button").focus();
+        setMode("scores", "close-scores-button");
       }
       function closeScores() {
-        mode = scoresReturn;
-        $("scores-modal").hidden = true; $("home").inert = false; $("game").inert = false;
-        if (mode === "pause") { $("pause-modal").hidden = false; $("resume-button").focus(); }
+        setMode(scoresReturn);
+        if (mode === "pause") $("resume-button").focus();
         else if (scoresOpener) scoresOpener.focus();
-        resetInput();
+        resize();
+      }
+      function renderMath(notice = "") {
+        const task = world.progress.math.pending;
+        if (!task) throw new Error("Die Mathepause hat keine Aufgabe.");
+        $("math-credit").textContent = "Du rechnest für: " + C.species(task.dinoId).name;
+        $("math-question").textContent = task.a + " " + (task.operator === "-" ? "−" : "+") + " " + task.b + " = ?";
+        $("math-answer").value = task.input;
+        $("math-feedback").textContent = task.completed
+          ? "Prima, das stimmt! +1 Mathepunkt für " + C.species(task.dinoId).name + "."
+          : notice || (task.attempts ? "Noch nicht ganz. Versuch es in Ruhe noch einmal. Es geht kein Punkt verloren." : "Du schaffst das. Wenn du möchtest, hilft dir ein Tipp.");
+        $("math-keypad").hidden = task.completed;
+        $("math-continue-button").hidden = !task.completed;
+        $("math-hint-button").hidden = task.completed;
+        $("math-hint-button").textContent = task.hintLevel ? "Schritt für Schritt" : "Tipp zeigen";
+        $("math-hint").hidden = !task.hintLevel || task.completed;
+        $("math-hint").textContent = task.hintLevel ? C.mathHint(task, task.hintLevel) : "";
+      }
+      function showMath() {
+        setMode("math");
+        renderMath();
+        $(world.progress.math.pending.completed ? "math-feedback" : "math-answer").focus();
+      }
+      function editCurrentMath(key) {
+        if (mode !== "math" || world.progress.math.pending.completed) return;
+        world.editMath(key); persist(); renderMath();
+        $("math-answer").focus();
+      }
+      function answerCurrentMath() {
+        if (mode !== "math") return;
+        const status = world.answerMath();
+        persist(); renderMath(status === "empty" ? "Tippe erst deine Antwort ein." : "");
+        if (status === "correct") {
+          resetInput(); playSound("achievement"); $("math-feedback").focus();
+        }
       }
       function start() {
-        world.choose(selected); persist(); mode = "play"; resetInput();
-        $("home").hidden = true; $("game").hidden = false; $("pause-modal").hidden = true; $("help-modal").hidden = true;
+        if (mode !== "home") return;
+        world.choose(selected); persist(); setMode("play");
         $("player-name").textContent = C.species(selected).name;
         $("eat-icon").setAttribute("href", C.species(selected).diet === "meat" ? "#i-food" : "#i-leaf");
         camera.x = world.player.x; camera.y = world.player.y;
         updateSoundButton(); resize(); updateHud();
-        showToast(world.player.meals ? "Willkommen zurück auf deiner Insel!" : "Hallo, kleiner Dino! Ziehe links den Steuerkreis.", 4.3);
+        if (world.progress.math.pending) showMath();
+        else showToast(world.player.meals ? "Willkommen zurück auf deiner Insel!" : "Hallo, kleiner Dino! Ziehe links den Steuerkreis.", 4.3);
         lastTime = performance.now();
       }
       function pause() {
-        if (mode !== "play") { if (world) persist(); return; }
-        mode = "pause"; resetInput(); persist();
-        $("pause-modal").hidden = false; $("resume-button").focus();
+        if (!["play", "math"].includes(mode)) { if (world) persist(); return; }
+        setMode("pause", "resume-button"); persist();
       }
       function resume() {
-        mode = "play"; $("pause-modal").hidden = true; $("help-modal").hidden = true;
-        resetInput(); lastTime = performance.now();
-        $("pause-button").focus();
+        if (world.progress.math.pending) showMath();
+        else setMode("play", "pause-button");
       }
       function goHome() {
-        persist(); resetInput(); mode = "home"; selected = world.player.speciesId;
-        $("game").hidden = true; $("pause-modal").hidden = true; $("help-modal").hidden = true; $("home").hidden = false;
+        persist(); selected = world.player.speciesId; setMode("home");
         selectDino(selected); resize(); $("start-button").focus();
       }
       function action(kind) {
@@ -1348,7 +1589,7 @@
       }
       function loop(timestamp) {
         const dt = Math.min(.05, Math.max(0, (timestamp - (lastTime || timestamp)) / 1000)); lastTime = timestamp;
-        if (mode === "play") {
+        if (mode === "play" && !document.hidden) {
           const keyX = (keys.has("ArrowRight") || keys.has("KeyD") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("KeyA") ? 1 : 0);
           const keyY = (keys.has("ArrowDown") || keys.has("KeyS") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("KeyW") ? 1 : 0);
           world.update(dt, { x: axis.x || keyX, y: axis.y || keyY });
@@ -1364,15 +1605,31 @@
       }
       function handleBack() {
         if (mode === "scores") { closeScores(); return true; }
-        if (mode === "help") { mode = "pause"; $("help-modal").hidden = true; $("pause-modal").hidden = false; $("resume-button").focus(); return true; }
-        if (mode === "play") { pause(); return true; }
+        if (mode === "help") { setMode("pause", "resume-button"); return true; }
+        if (mode === "play" || mode === "math") { pause(); return true; }
         if (mode === "pause") { resume(); return true; }
-        persist(); return false;
+        persist(); return mode !== "home";
       }
       function bind() {
         $("start-button").addEventListener("click", start);
         ["home-scores-button", "scores-button", "pause-scores-button"].forEach(id => $(id).addEventListener("click", openScores));
         $("close-scores-button").addEventListener("click", closeScores);
+        $("practice-button").addEventListener("click", () => {
+          world.practiceMath(); handleEvents(); persist(); showMath();
+        });
+        $("math-pause-button").addEventListener("click", pause);
+        $("math-keypad").querySelectorAll("[data-digit]").forEach(button => {
+          button.addEventListener("click", () => editCurrentMath(button.dataset.digit));
+        });
+        $("math-delete-button").addEventListener("click", () => editCurrentMath("Backspace"));
+        $("math-clear-button").addEventListener("click", () => editCurrentMath("Clear"));
+        $("math-check-button").addEventListener("click", answerCurrentMath);
+        $("math-hint-button").addEventListener("click", () => {
+          world.revealMathHint(); persist(); renderMath();
+        });
+        $("math-continue-button").addEventListener("click", () => {
+          if (mode === "math" && world.finishMath()) { persist(); resume(); }
+        });
         [["eat-button", "eat"], ["push-button", "push"]].forEach(pair => {
           $(pair[0]).addEventListener("pointerdown", event => {
             if (event.button !== 0) return;
@@ -1387,7 +1644,7 @@
         $("resume-button").addEventListener("click", resume);
         $("change-button").addEventListener("click", goHome);
         $("help-button").addEventListener("click", () => {
-          mode = "help"; $("pause-modal").hidden = true; $("help-modal").hidden = false; $("close-help-button").focus();
+          setMode("help", "close-help-button");
         });
         $("close-help-button").addEventListener("click", () => handleBack());
         $("sound-button").addEventListener("click", () => {
@@ -1406,24 +1663,44 @@
         });
         window.addEventListener("keydown", event => {
           if (event.code === "Escape") { event.preventDefault(); if (!event.repeat) handleBack(); return; }
+          if (mode === "math") {
+            const task = world.progress.math.pending;
+            const digit = /^\d$/.test(event.key), erase = ["Backspace", "Delete"].includes(event.key);
+            const submit = event.key === "Enter" && (!event.target.closest("button") || event.target.id === "math-check-button");
+            if (digit || erase || submit) {
+              event.preventDefault();
+              if (!event.repeat && !task.completed) {
+                if (digit) editCurrentMath(event.key);
+                else if (erase) editCurrentMath(event.key === "Delete" ? "Clear" : "Backspace");
+                else answerCurrentMath();
+              }
+            }
+            return;
+          }
           if (mode !== "play") return;
           if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyE", "KeyF"].includes(event.code)) event.preventDefault();
+          if (blockedKeys.has(event.code)) {
+            if (event.repeat) return;
+            blockedKeys.delete(event.code);
+          }
           keys.add(event.code);
           if (!event.repeat && ["Space", "KeyE"].includes(event.code)) action("eat");
           if (!event.repeat && event.code === "KeyF") action("push");
         });
-        window.addEventListener("keyup", event => keys.delete(event.code));
-        window.addEventListener("blur", () => { resetInput(); if (mode === "play") pause(); });
+        window.addEventListener("keyup", event => { keys.delete(event.code); blockedKeys.delete(event.code); });
+        window.addEventListener("blur", () => { resetInput(); pause(); });
         window.addEventListener("resize", () => { resetInput(); resize(); });
         document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
         window.addEventListener("pagehide", () => { pause(); persist(); });
         $("game").addEventListener("contextmenu", event => event.preventDefault());
         document.addEventListener("keydown", event => {
-          if (event.code !== "Tab" || !["pause", "help", "scores"].includes(mode)) return;
+          if (event.code !== "Tab" || !["pause", "help", "scores", "math"].includes(mode)) return;
           const modal = $(mode + "-modal");
-          const buttons = Array.from(modal.querySelectorAll("button")), first = buttons[0], last = buttons[buttons.length - 1];
+          const buttons = Array.from(modal.querySelectorAll("button:not(:disabled), input")).filter(button => button.getClientRects().length);
+          const first = buttons[0], last = buttons[buttons.length - 1];
           if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
           else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+          else if (!modal.contains(document.activeElement)) { event.preventDefault(); first.focus(); }
         });
       }
       try {
@@ -1438,7 +1715,10 @@
             mode, species: world.player.speciesId, strength: world.playerStrength(), scale: world.playerScale(),
             x: world.player.x, y: world.player.y, time: world.time, volcanoDormant: C.MAP.volcano.dormant,
             meals: world.player.meals, saved: !saveError, sound: world.progress.sound,
-            obstaclesCleared: world.progress.cleared.length, mission: world.mission(), scores: C.localScores(world.progress)
+            obstaclesCleared: world.progress.cleared.length, mission: world.mission(), scores: C.localScores(world.progress),
+            math: JSON.parse(JSON.stringify(world.progress.math)),
+            npcs: world.npcs.map(n => ({ id: n.id, x: n.x, y: n.y, scale: n.scale, hiddenUntil: n.hiddenUntil })),
+            input: { x: axis.x, y: axis.y, keys: Array.from(keys) }
           })
         };
         requestAnimationFrame(loop);
