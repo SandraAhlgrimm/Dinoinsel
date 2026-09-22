@@ -5,11 +5,6 @@ import functions from "@azure/functions";
 const { HttpRequest, HttpResponse } = functions;
 const hash = (value) => createHash("sha256").update(value).digest();
 
-/**
- * @param {import("../src/http.js").HttpApi} api
- * @param {typeof import("../src/routes.js").matchRoute} matchRoute
- * @param {{ adminKey: string, port?: number, log?: (message: string) => void }} options
- */
 export async function startLocalServer(api, matchRoute, { adminKey, port = 0, log = () => {} }) {
   if (typeof adminKey !== "string" || adminKey.length < 32) throw new Error("A random local-only administration key is required.");
   const keyHash = hash(adminKey);
