@@ -2,9 +2,11 @@
 
 Ein freundliches Dino-Abenteuer auf Deutsch, für Kinder ab etwa sieben Jahren. Sechs wählbare Dinos, eigene Zeichnungen, keine Werbung, Käufe oder Konten.
 
-**[Im Browser spielen](https://SandraAhlgrimm.github.io/Dinoinsel/)** · **[Android-APK herunterladen](https://github.com/SandraAhlgrimm/Dinoinsel/releases/download/v1.0.0-preview/Dinoinsel.apk)** · **[Release und Hinweise](https://github.com/SandraAhlgrimm/Dinoinsel/releases/tag/v1.0.0-preview)**
+**[Im Browser spielen](https://SandraAhlgrimm.github.io/Dinoinsel/)** · **[Android-APK herunterladen](https://github.com/SandraAhlgrimm/Dinoinsel/releases/download/v1.2.0-preview/Dinoinsel.apk)** · **[Release und Hinweise](https://github.com/SandraAhlgrimm/Dinoinsel/releases/tag/v1.2.0-preview)**
 
-Die Android-Vorschau **1.0** ist ein früherer Stand: Die neue lokale Bestenliste und die Mathepausen der Webversion sind **noch nicht in dieser APK**. Die APK gehört in die Release-Downloads, nicht in den Quellcode. Die App benötigt Android 8.0 oder neuer und ein aktuelles Android System WebView. Über eine Installation und eventuelle Sicherheitswarnungen entscheidet eine erwachsene Gerätebesitzerin oder ein erwachsener Gerätebesitzer.
+Die Android-Vorschau **1.2** heißt ebenfalls **Dinoinsel** und enthält jetzt die lokale Bestenliste und die verpflichtenden Mathepausen der Webversion. Sie läuft offline ohne Netzwerkberechtigung; eine gemeinsame Cloud-Bestenliste ist nicht enthalten. Die APK gehört in die Release-Downloads, nicht in den Quellcode. Die App benötigt Android 8.0 oder neuer und ein aktuelles Android System WebView. Über eine Installation und eventuelle Sicherheitswarnungen entscheidet eine erwachsene Gerätebesitzerin oder ein erwachsener Gerätebesitzer. **Ein Funktionstest auf einem echten Android-Gerät steht noch aus.**
+
+**Update von 1.0:** Die neue APK über die vorhandene App installieren. Paketkennung und Signaturschlüssel sind unverändert. **Nicht vorher deinstallieren oder App-Daten löschen**, wenn der lokale Spielstand erhalten bleiben soll.
 
 ## Spielen und Punkte
 
@@ -30,7 +32,7 @@ Tastatur: Pfeile/WASD laufen, E/Leertaste essen, F schubsen, Esc Pause/zurück. 
 
 `game/index.html` enthält das gesamte Spiel samt reinem `DinoCore`-Regelmodell: Aufgaben erzeugen, Spielzeit planen, Antworten prüfen, Punkte verbuchen und Spielstände migrieren sind unabhängig vom DOM prüfbar. `tests/core.test.cjs`, `tests/math.test.cjs` und `tests/native-shell.test.cjs` prüfen Spielregeln, 10.000 Aufgaben und native Lifecycle-Hooks. `tests/browser.test.cjs` und `tests/math-browser.test.cjs` prüfen reale Touch-/Tastaturbedienung, beide Tabletgrößen, Offline-Nutzung und Speicher-/Pause-/Zurück-Wege. Gestellte Spielstände liegen nur als Testfixtures unter `tests/fixtures/`; das Spiel enthält keine Cheat-Schnittstelle.
 
-`android/` enthält zunächst die unveränderte native 1.0-Baseline; eine aktualisierte Android-Bauanleitung und Version folgen getrennt. Paketkennung `de.dinoinsel.game`, Speicherkennung sowie `window.dinoApp.pause()` und `.handleBack()` bleiben für Updates stabil. `snapshot()` liefert ausschließlich lesende Diagnosedaten.
+`android/` enthält die nativen Quellen der Version **1.2**; die Bauanleitung steht in [`android/BUILDING.md`](android/BUILDING.md). Paketkennung `de.dinoinsel.game`, Speicherkennung sowie `window.dinoApp.pause()` und `.handleBack()` bleiben für Updates stabil. `snapshot()` liefert ausschließlich lesende Diagnosedaten.
 
 Mit Node.js 22 oder neuer:
 
@@ -46,4 +48,4 @@ Unter macOS wird vorhandenes Google Chrome genutzt, sonst Playwright-Chromium. `
 
 ## Lizenz
 
-Für den eigenen Quellcode und die eigenen Zeichnungen wurde **noch keine Open-Source-Lizenz ausgewählt**. Die öffentliche Sichtbarkeit allein erteilt keine pauschale Lizenz. Abhängigkeiten und Build-Werkzeuge behalten ihre jeweiligen Lizenzen; die Android-Baseline dokumentiert deren Herkunft unter `android/BUILDING.md`.
+Für den eigenen Quellcode und die eigenen Zeichnungen wurde **noch keine Open-Source-Lizenz ausgewählt**. Die öffentliche Sichtbarkeit allein erteilt keine pauschale Lizenz. Abhängigkeiten und Build-Werkzeuge behalten ihre jeweiligen Lizenzen; die Android-Bauanleitung dokumentiert deren Herkunft unter `android/BUILDING.md`.
