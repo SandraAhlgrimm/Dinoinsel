@@ -1,0 +1,35 @@
+{
+  "name": "dinoinsel-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private Dinoinsel friends leaderboard on Azure Functions and Azure Table Storage",
+  "type": "module",
+  "main": "dist/functions.js",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "test:compile": "tsc -p tsconfig.test.json",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "npm run test:compile && node --test .test-dist/test/unit/*.test.js",
+    "test:integration": "npm run test:compile && node --test --test-concurrency=1 .test-dist/test/integration/*.test.js",
+    "check": "npm run typecheck && npm run build && npm test",
+    "dev": "npm run build && node tools/dev.mjs",
+    "infra:check": "npm run build && node tools/check-parameters.mjs",
+    "package": "npm run build && node tools/package.mjs",
+    "admin": "node tools/admin.mjs"
+  },
+  "dependencies": {
+    "@azure/data-tables": "13.3.2",
+    "@azure/functions": "4.16.5",
+    "@azure/identity": "4.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.4",
+    "azurite": "3.37.0",
+    "fflate": "0.8.3",
+    "typescript": "7.0.2"
+  }
+}
