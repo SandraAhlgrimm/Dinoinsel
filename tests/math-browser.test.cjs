@@ -9,6 +9,7 @@ const { C, gamePath } = require("./core-model.cjs");
 const fixtures = require("./fixtures/math-saves.cjs");
 
 const output = path.resolve(__dirname, "../dist");
+const nativeUrl = "https://dino-insel.invalid/";
 const errors = [], externalRequests = [];
 const snapshot = page => page.evaluate(() => window.dinoApp.snapshot());
 const back = page => page.evaluate(() => window.dinoApp.handleBack());
@@ -63,7 +64,7 @@ async function keyboardAnswer(page, answer) {
   const contexts = [];
   try {
     browser = await chromium.launch(browserOptions());
-    async function game({ save, width = 1280, height = 800, offline = false, failStorage = false } = {}) {
+    async function game({ save, width = 1280, height = 800, offline = false, nativeOrigin = false, failStorage = false } = {}) {
       const context = await browser.newContext({ viewport: { width, height }, hasTouch: true, isMobile: width === 1024, colorScheme: "light" });
       contexts.push(context);
       if (save) await context.addInitScript(data => {
@@ -72,14 +73,21 @@ async function keyboardAnswer(page, answer) {
       if (failStorage) await context.addInitScript(() => {
         Storage.prototype.setItem = function () { throw new DOMException("Test storage is full", "QuotaExceededError"); };
       });
-      if (offline) await context.setOffline(true);
+      if (nativeOrigin) {
+        await context.route(nativeUrl, route => route.fulfill({
+          status: 200, contentType: "text/html; charset=utf-8", body: fs.readFileSync(gamePath)
+        }));
+        await context.route(nativeUrl + "favicon.ico", route => route.fulfill({ status: 204 }));
+      }
+      if (offline || nativeOrigin) await context.setOffline(true);
       const page = await context.newPage();
       page.on("pageerror", error => errors.push(error.message));
       page.on("console", message => { if (!failStorage && message.type() === "error") errors.push(message.text()); });
       page.on("request", request => {
-        if (!request.url().startsWith(url) && !request.url().startsWith("file:") && !request.url().startsWith("data:")) externalRequests.push(request.url());
+        const mockedNative = nativeOrigin && [nativeUrl, nativeUrl + "favicon.ico"].includes(request.url());
+        if (!mockedNative && !request.url().startsWith(url) && !request.url().startsWith("file:") && !request.url().startsWith("data:")) externalRequests.push(request.url());
       });
-      await page.goto(offline ? pathToFileURL(gamePath).href : url);
+      await page.goto(nativeOrigin ? nativeUrl : offline ? pathToFileURL(gamePath).href : url);
       await page.waitForFunction(() => !!window.dinoApp);
       return { context, page };
     }
@@ -325,10 +333,30 @@ async function keyboardAnswer(page, answer) {
     await offline.locator("#math-continue-button").tap();
     await offline.locator("#eat-button").tap();
     assert.equal((await snapshot(offline)).scores.total, 2);
-    await offline.reload();
-    await offline.waitForFunction(() => !!window.dinoApp);
-    assert.equal((await snapshot(offline)).scores.total, 2);
-    console.log("PASS completely offline bundled-file maths, play and relaunch with no network");
+    console.log("PASS completely offline bundled-file maths and play with no network");
+
+    // file: storage is browser-defined; Android uses this stable HTTPS origin for saves.
+    const { page: nativeOffline } = await game({ save: fixtures.pending(), nativeOrigin: true });
+    await nativeOffline.locator("#start-button").tap();
+    assert.equal((await snapshot(nativeOffline)).mode, "math");
+    await keyboardAnswer(nativeOffline, C.mathResult((await snapshot(nativeOffline)).math.pending));
+    await nativeOffline.reload();
+    await nativeOffline.waitForFunction(() => !!window.dinoApp);
+    await nativeOffline.locator("#start-button").tap();
+    assert.equal((await snapshot(nativeOffline)).math.pending.completed, true);
+    assert.equal((await snapshot(nativeOffline)).scores.total, 1);
+    await nativeOffline.locator("#math-continue-button").tap();
+    await nativeOffline.locator("#eat-button").tap();
+    assert.equal((await snapshot(nativeOffline)).scores.total, 2);
+    await nativePause(nativeOffline);
+    const nativeSaved = await nativeOffline.evaluate(() => JSON.parse(localStorage.getItem("dino-insel-v1")));
+    assert.equal(nativeSaved.stats.mathSolved, 1);
+    assert.equal(nativeSaved.stats.meals, 1);
+    await nativeOffline.reload();
+    await nativeOffline.waitForFunction(() => !!window.dinoApp);
+    assert.equal((await snapshot(nativeOffline)).scores.total, 2);
+    assert.deepEqual(await nativeOffline.evaluate(() => JSON.parse(localStorage.getItem("dino-insel-v1"))), nativeSaved);
+    console.log("PASS offline-fulfilled native-origin completed-task and saved-score reloads with no network");
 
     const { page: failed } = await game({ failStorage: true, width: 1024, height: 600 });
     await failed.locator("#start-button").tap();
