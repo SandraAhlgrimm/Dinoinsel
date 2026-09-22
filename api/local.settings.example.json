@@ -1,0 +1,16 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_CORE_TOOLS_TELEMETRY_OPTOUT": "1",
+    "STORAGE_MODE": "azurite",
+    "TABLE_NAME": "Dinoinsel",
+    "ALLOWED_ORIGINS": "http://localhost:4173,http://127.0.0.1:4173"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "http://localhost:4173,http://127.0.0.1:4173",
+    "CORSCredentials": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": { "value": "dinoinsel-replace-with-unique-suffix" },
+    "location": { "value": "westeurope" },
+    "gameOrigins": { "value": ["https://REPLACE-WITH-YOUR-GITHUB-ACCOUNT.github.io"] },
+    "maximumInstanceCount": { "value": 1 }
+  }
+}
