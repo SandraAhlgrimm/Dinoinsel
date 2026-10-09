@@ -80,7 +80,7 @@ async function main() {
     case "create":
       if (values.length > 1) throw new AdminError("Den Raumnamen bitte als ein Argument in Anführungszeichen angeben.");
       method = "POST";
-      path = "admin/rooms";
+      path = "manage/rooms";
       body = values.length === 1 ? { label: values[0] } : {};
       break;
     case "inspect":
@@ -88,7 +88,7 @@ async function main() {
     case "revoke":
     case "delete-room": {
       if (values.length !== 1) throw new AdminError("Genau eine Raum-ID angeben.");
-      path = `admin/rooms/${validId(values[0])}`;
+      path = `manage/rooms/${validId(values[0])}`;
       method = action === "inspect" ? "GET" : action === "delete-room" ? "DELETE" : "POST";
       if (action === "rotate" || action === "revoke") {
         path += "/invite";
@@ -102,7 +102,7 @@ async function main() {
     case "delete-profile":
       if (values.length !== 2) throw new AdminError("Raum-ID und Profil-ID angeben.");
       if (!confirmed) throw new AdminError("Das Profil wird endgültig aus der Online-Runde entfernt. Zum Bestätigen --confirm hinzufügen.");
-      path = `admin/rooms/${validId(values[0])}/profiles/${validId(values[1])}`;
+      path = `manage/rooms/${validId(values[0])}/profiles/${validId(values[1])}`;
       method = "DELETE";
       break;
     default:

@@ -18,6 +18,7 @@ test("the actual v4 entrypoint registers key-protected adult methods and anonymo
     assert.ok(actual);
     assert.equal(actual.authLevel, route.authLevel);
     assert.equal(actual.route, route.route);
+    assert.doesNotMatch(actual.route, /^\/?admin/i, "Azure reserves admin-prefixed HTTP routes");
     assert.deepEqual(actual.methods, [route.method]);
     assert.equal(typeof actual.handler, "function");
   }
@@ -26,5 +27,6 @@ test("the actual v4 entrypoint registers key-protected adult methods and anonymo
   for (const [, registration] of preflights) {
     assert.deepEqual(registration.methods, ["OPTIONS"]);
     assert.equal(registration.authLevel, "anonymous");
+    assert.doesNotMatch(registration.route ?? "", /^\/?admin/i);
   }
 });

@@ -42,12 +42,12 @@ function responseBody(response: HttpResponseInit): unknown {
 test("all adult endpoints are function-key protected in the production registration descriptors", () => {
   assert.ok(ROUTES.length >= 9);
   for (const route of ROUTES) {
-    assert.equal(route.authLevel, route.route.startsWith("admin/") ? "function" : "anonymous");
+    assert.equal(route.authLevel, route.route.startsWith("manage/") ? "function" : "anonymous");
   }
-  assert.equal(matchRoute("/api/admin/rooms", "POST")?.route.action, "createRoom");
-  assert.equal(matchRoute("/api/admin/rooms", "GET"), undefined);
+  assert.equal(matchRoute("/api/manage/rooms", "POST")?.route.action, "createRoom");
+  assert.equal(matchRoute("/api/manage/rooms", "GET"), undefined);
   assert.equal(matchRoute("/api/not-a-route", "GET"), undefined);
-  assert.equal(matchRoute("/api/admin/rooms/a/invite", "DELETE"), undefined);
+  assert.equal(matchRoute("/api/manage/rooms/a/invite", "DELETE"), undefined);
 });
 
 test("HTTP contract: join, submit, leaderboard, and 204 own deletion", async () => {
@@ -74,14 +74,14 @@ test("HTTP contract: join, submit, leaderboard, and 204 own deletion", async () 
 
 test("a key-authenticated handler allows an omitted create body and returns the fixed contract", async () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
-  const created = status(await api.handle("createRoom", request("admin/rooms", "POST"), noLog), 201);
+  const created = status(await api.handle("createRoom", request("manage/rooms", "POST"), noLog), 201);
   assert.equal(created.jsonBody.room.label, "Unsere Dino-Runde");
   assert.equal(typeof created.jsonBody.inviteCode, "string");
 });
 
 test("allowed CORS preflights need no bearer token or admin key and never permit credentials", () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
-  for (const [route, method] of [["progress", "POST"], ["leaderboard", "GET"], ["admin/rooms", "POST"], ["profile", "DELETE"]]) {
+  for (const [route, method] of [["progress", "POST"], ["leaderboard", "GET"], ["manage/rooms", "POST"], ["profile", "DELETE"]]) {
     assert.ok(route && method);
     const response = api.preflight(route, request(route, "OPTIONS", undefined, {
       "access-control-request-method": method,
@@ -99,7 +99,7 @@ test("allowed CORS preflights need no bearer token or admin key and never permit
 test("unlisted origins, null origins, suffix lookalikes, wrong methods and extra preflight headers are denied", async () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
   for (const origin of ["null", "https://evil.example", `${ORIGIN}.evil.example`, `${ORIGIN}/path`, "http://dinoinsel.example"]) {
-    const response = await api.handle("createRoom", request("admin/rooms", "POST", {}, { origin }), noLog);
+    const response = await api.handle("createRoom", request("manage/rooms", "POST", {}, { origin }), noLog);
     status(response, 403);
     assert.equal(new HttpResponse(response).headers.get("access-control-allow-origin"), null);
     assert.deepEqual((response.jsonBody as { error: { code: string } }).error.code, "ORIGIN_NOT_ALLOWED");
@@ -116,7 +116,7 @@ test("unlisted origins, null origins, suffix lookalikes, wrong methods and extra
 test("non-browser requests work, while no-origin preflights are rejected", async () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
   const created = await api.handle("createRoom", new HttpRequest({
-    url: "http://127.0.0.1/api/admin/rooms", method: "POST",
+    url: "http://127.0.0.1/api/manage/rooms", method: "POST",
   }), noLog);
   status(created, 201);
   assert.equal(new HttpResponse(created).headers.get("access-control-allow-origin"), null);
@@ -171,13 +171,13 @@ test("duplicate, missing and unknown query parameters fail instead of being ambi
 test("malformed JSON, unknown body fields, wrong types, invalid UTF-8, and non-JSON bodies fail safely", async () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
   const requests = [
-    new HttpRequest({ url: "http://127.0.0.1/api/admin/rooms", method: "POST", body: { string: "{" }, headers: { "content-type": "application/json" } }),
-    new HttpRequest({ url: "http://127.0.0.1/api/admin/rooms", method: "POST", body: { string: "{}" }, headers: { "content-type": "text/plain" } }),
-    new HttpRequest({ url: "http://127.0.0.1/api/admin/rooms", method: "POST", body: { bytes: new Uint8Array([0xff]) }, headers: { "content-type": "application/json" } }),
-    new HttpRequest({ url: "http://127.0.0.1/api/admin/rooms", method: "POST", body: { string: "{}" }, headers: { "content-type": "application/json", "content-encoding": "gzip" } }),
-    request("admin/rooms", "POST", []),
-    request("admin/rooms", "POST", null),
-    request("admin/rooms", "POST", { name: "No free text names" }),
+    new HttpRequest({ url: "http://127.0.0.1/api/manage/rooms", method: "POST", body: { string: "{" }, headers: { "content-type": "application/json" } }),
+    new HttpRequest({ url: "http://127.0.0.1/api/manage/rooms", method: "POST", body: { string: "{}" }, headers: { "content-type": "text/plain" } }),
+    new HttpRequest({ url: "http://127.0.0.1/api/manage/rooms", method: "POST", body: { bytes: new Uint8Array([0xff]) }, headers: { "content-type": "application/json" } }),
+    new HttpRequest({ url: "http://127.0.0.1/api/manage/rooms", method: "POST", body: { string: "{}" }, headers: { "content-type": "application/json", "content-encoding": "gzip" } }),
+    request("manage/rooms", "POST", []),
+    request("manage/rooms", "POST", null),
+    request("manage/rooms", "POST", { name: "No free text names" }),
   ];
   for (const input of requests) {
     const response = await api.handle("createRoom", input, noLog);
@@ -191,7 +191,7 @@ test("body limit is enforced with, without, and despite a false Content-Length",
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
   for (const headers of [{}, { "content-length": String(MAX_BODY_BYTES + 1) }, { "content-length": "1" }]) {
     const oversized = new HttpRequest({
-      url: "http://127.0.0.1/api/admin/rooms", method: "POST", headers: { ...headers, "content-type": "application/json" },
+      url: "http://127.0.0.1/api/manage/rooms", method: "POST", headers: { ...headers, "content-type": "application/json" },
       body: { string: JSON.stringify({ label: "x".repeat(MAX_BODY_BYTES) }) },
     });
     status(await api.handle("createRoom", oversized, noLog), 400);
@@ -200,7 +200,7 @@ test("body limit is enforced with, without, and despite a false Content-Length",
 
 test("wrong methods never dispatch a mutation", async () => {
   const api = new HttpApi(new GameService(new MemoryStore()), new Set([ORIGIN]));
-  status(await api.handle("createRoom", request("admin/rooms", "GET"), noLog), 400);
+  status(await api.handle("createRoom", request("manage/rooms", "GET"), noLog), 400);
 });
 
 test("unknown exceptions and storage failures only produce sanitized German errors and static log markers", async () => {
@@ -214,7 +214,7 @@ test("unknown exceptions and storage failures only produce sanitized German erro
     };
     const logs: string[] = [];
     const api = new HttpApi(new GameService(store), new Set([ORIGIN]));
-    const response = await api.handle("createRoom", request("admin/rooms", "POST", { label: "Runde" }), (message) => logs.push(message));
+    const response = await api.handle("createRoom", request("manage/rooms", "POST", { label: "Runde" }), (message) => logs.push(message));
     status(response, 503);
     assert.equal(response.jsonBody.error.code, "UNAVAILABLE");
     assert.match(response.jsonBody.error.message as string, /Bestenliste/);

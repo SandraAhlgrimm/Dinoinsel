@@ -1,13 +1,43 @@
 # Dinoinsel – private Freundes-Bestenliste auf Azure
 
-**Vorbereiteter Quellcode; der Dienst ist nicht in Azure bereitgestellt.** Die aktuelle
-GitHub-Pages-Version und APK 1.2 verwenden ausschließlich ihre lokale Bestenliste.
+**Dev/Test-Backend in Azure bereitgestellt; noch nicht mit dem Spiel verbunden.**
+Die aktuelle GitHub-Pages-Version und APK 1.2 verwenden ausschließlich ihre lokale Bestenliste.
 Es gibt **noch keine Client-Anbindung**; `leaderboardApiUrl` bleibt leer. Ein Eintrag
 in der Konfiguration allein verbindet das Spiel nicht mit dieser API. Die spätere
-Client-Integration und Bereitstellung benötigen eine separate ausdrückliche Freigabe
-durch eine erwachsene Person; das Spiel benötigt keinen Azure-Zugangsschlüssel.
-Hier werden weder Azure-Konten angelegt noch automatisch Ressourcen, Abonnements
-oder Deployments gestartet.
+Client-Integration und eine Freigabe für echte Spielgruppen bleiben getrennte Schritte;
+das Spiel benötigt keinen Azure-Zugangsschlüssel. Lokale Prüfungen und GitHub Actions
+legen weiterhin keine Azure-Ressourcen an und starten keine Deployments.
+
+## Bereitgestellter Entwicklungsstand
+
+Am **9. Oktober 2026** wurde der Dienst nach ausdrücklicher Freigabe in der
+**Visual Studio Enterprise / MSDN-Subscription** bereitgestellt:
+
+| Einstellung | Stand |
+| --- | --- |
+| API-Origin | `https://dinoinsel-friends-6bb546e2.azurewebsites.net` |
+| Ressourcengruppe | `rg-dinoinsel-friends` |
+| Ressourcenregion | **Germany West Central** |
+| Hosting | Flex Consumption, Node.js 24, 512 MB, maximal eine On-Demand-Instanz, keine Always-ready-Instanzen |
+| Spiel-Origin für CORS | `https://sandraahlgrimm.github.io` |
+| Zugriff auf Storage | User-assigned Managed Identity, getrennte Host-/Spieldatenkonten, keine Shared Keys |
+| MSDN-Ausgabenlimit | **Eingeschaltet geblieben**; kein zusätzliches app-spezifisches Geldlimit eingerichtet |
+
+West Europe hat neue Ressourcen für diese Subscription abgewiesen. Die zuvor
+angelegte Ressourcengruppe trägt weiterhin West Europe als Metadatenregion;
+die eigentlichen App-, Identitäts- und Storage-Ressourcen liegen in Germany West Central.
+MSDN-Guthaben ist nur für **Entwicklung und Tests**, nicht für Produktionshosting
+bestimmt. Storage und Ausführungen können Guthaben verbrauchen; der Dienst ist
+nicht pauschal kostenlos.
+
+Am echten Azure-Host geprüft wurden Schlüsselpflicht für Erwachsenen-Routen,
+erlaubte/fremde CORS-Origin, Managed-Identity-Zugriff auf Table Storage, Beitritt
+und Wiederholung, Zählersumme und -grenzen, konkurrierende ETag-Updates,
+Ranggleichstände, Raum-/Profil-Token-Isolation, Einladungsrotation/-sperrung und
+eigene/adminseitige Löschung. Dabei wurden ausschließlich synthetische Profile
+verwendet und alle Test-Räume anschließend gelöscht. Last-/DDoS-Festigkeit,
+Langzeitkosten, Datenschutzfreigabe und ein echter Android-Gerätetest sind damit
+**nicht** nachgewiesen. Eine Online-Bestenliste im Spiel ist noch nicht aktiviert.
 
 ## Was enthalten ist
 
@@ -54,9 +84,11 @@ auf **127.0.0.1 und einem freien Port**. Sie verwenden `.local/`, beenden ihre
 eigenen Prozesse und entfernen die Testdaten auch nach Testfehlern. Keine Verbindung
 zu Azure, keine globalen Installationen und keine Hintergrund-Daemons nötig.
 
-Der Speicheradaptertest und die HTTP-Tests sind **keine** Prüfung von Azure-RBAC,
+Der lokale Speicheradaptertest und die HTTP-Tests sind **keine** Prüfung von Azure-RBAC,
 Managed Identity, Azure-TLS, Azure-Host-Authentifizierung, Region/Quota oder der
-plattformseitigen CORS-Schicht. Diese Prüfungen stehen vor einer echten Freigabe noch aus.
+plattformseitigen CORS-Schicht. Die oben beschriebenen zusätzlichen Hosted-Prüfungen
+gelten nur für den genannten Dev/Test-Stand; nach Änderungen oder in anderen
+Subscriptions/Regionen müssen sie erneut erfolgen.
 
 ### Lokalen API-Server starten – noch ohne Spiel-Anbindung
 
@@ -116,8 +148,13 @@ Er ist nicht der Azure Functions Host und gehört nicht ins Deployment.
 
 ### 1. Raum anlegen – nur Erwachsene
 
-`POST /api/admin/rooms`, Azure `authLevel: "function"`.
+`POST /api/manage/rooms`, Azure `authLevel: "function"`.
 Zugriffsschlüssel ausschließlich im Header `x-functions-key`.
+
+Der Präfix `manage` ist bewusst gewählt: Azure Functions reserviert
+`admin`-Präfixe für den Host. Die ursprünglich vorbereiteten `/api/admin/...`-Routen
+wurden deshalb vor der nutzbaren Azure-Bereitstellung ersetzt. Die Spieler-Routen
+und ihre Token-Regeln bleiben unverändert.
 
 Optionaler Body: `{"label":"Unsere Dino-Runde"}`. Ohne Body/Label wird dieser
 Standard verwendet. Labels werden normalisiert und auf 1–40 Zeichen aus Buchstaben,
@@ -350,11 +387,11 @@ Geschützte Zusatzrouten:
 
 | Methode / Route | Wirkung |
 | --- | --- |
-| `GET /api/admin/rooms/{roomId}` | Raumdaten, `inviteActive`, `playerCount`, IDs/Fantasienamen; keine Token oder Einladungen |
-| `POST /api/admin/rooms/{roomId}/invite`, `{"action":"rotate"}` | Neue Einladung, bisherige Einladung sofort ungültig; bestehende Punkte bleiben |
+| `GET /api/manage/rooms/{roomId}` | Raumdaten, `inviteActive`, `playerCount`, IDs/Fantasienamen; keine Token oder Einladungen |
+| `POST /api/manage/rooms/{roomId}/invite`, `{"action":"rotate"}` | Neue Einladung, bisherige Einladung sofort ungültig; bestehende Punkte bleiben |
 | Derselbe Pfad, `{"action":"revoke"}` | Keine weiteren Beitritte, Antwort `{room,inviteRevoked:true}` |
-| `DELETE /api/admin/rooms/{roomId}/profiles/{playerId}` | Genau dieses Profil entfernen; bei bereits entferntem Profil idempotent 204 |
-| `DELETE /api/admin/rooms/{roomId}` | Alle Raumdaten atomar entfernen; auch wiederholt 204 |
+| `DELETE /api/manage/rooms/{roomId}/profiles/{playerId}` | Genau dieses Profil entfernen; bei bereits entferntem Profil idempotent 204 |
+| `DELETE /api/manage/rooms/{roomId}` | Alle Raumdaten atomar entfernen; auch wiederholt 204 |
 
 Sperren/Drehen einer Einladung meldet bestehende Mitglieder **nicht** ab.
 Bei weitergegebener Einladung: sperren, unerwünschte Profile entfernen, dann neue
@@ -370,10 +407,12 @@ einzelne Funktionsschlüssel verwenden. **Nie den `_master`-Schlüssel und nie
 einen Erwachsenen-Schlüssel im Spiel, Android-Paket, Pages-HTML oder Repository
 speichern.** Raum-IDs und aktuelle Einladungen privat notieren.
 
-## Späteres Azure-Deployment – nur nach separater Freigabe
+## Weiteres Azure-Deployment – nur nach separater Freigabe
 
-**Die folgenden Schritte sind eine Anleitung, keine bereits ausgeführten Aktionen.
-Sie benötigen eine bewusst ausgewählte Azure-Subscription und können Geld kosten.**
+**Die folgenden Schritte sind eine Vorlage für weitere Bereitstellungen, keine
+automatische Aktion.** Den bereits vorhandenen Dev/Test-Stand nicht versehentlich
+als zweite Umgebung anlegen oder mit Beispielwerten überschreiben. Jede weitere
+Bereitstellung benötigt eine bewusst ausgewählte Subscription und kann Geld kosten.
 Aktuelle Azure CLI mit Flex-/Entra-Deployment-Unterstützung und Bicep verwenden.
 Das ausführende Erwachsenenkonto braucht Ressourcen- und RBAC-Zuweisungsrechte
 für die gewählte, dedizierte Ressourcengruppe; die App selbst erhält keine solchen

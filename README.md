@@ -34,7 +34,7 @@ Tastatur: Pfeile/WASD laufen, E/Leertaste essen, F schubsen, Esc Pause/zurück. 
 
 `android/` enthält die nativen Quellen der Version **1.2**; die Bauanleitung steht in [`android/BUILDING.md`](android/BUILDING.md). Paketkennung `de.dinoinsel.game`, Speicherkennung sowie `window.dinoApp.pause()` und `.handleBack()` bleiben für Updates stabil. `snapshot()` liefert ausschließlich lesende Diagnosedaten.
 
-Unter [`api/`](api/README.md) liegt **nur vorbereiteter Backend-Quellcode** für eine spätere freiwillige Online-Erweiterung. Der Dienst ist **nicht in Azure bereitgestellt und nicht mit dem aktuellen Spiel verbunden**; eine Client-Anbindung fehlt noch. Ein Konfigurationseintrag allein aktiviert sie nicht. Die Webversion und APK **1.2 behalten ausschließlich lokale Bestenlisten**.
+Unter [`api/`](api/README.md) liegt der Backend-Quellcode für eine spätere freiwillige Online-Erweiterung. Ein **Dev/Test-Backend ist in Azure bereitgestellt**, aber **noch nicht mit dem aktuellen Spiel verbunden**; eine Client-Anbindung fehlt noch. Ein Konfigurationseintrag allein aktiviert sie nicht. Die Webversion und APK **1.2 behalten ausschließlich lokale Bestenlisten**. Der Azure-Entwicklungsstand nutzt MSDN-Guthaben mit eingeschaltetem Ausgabenlimit und ist nicht als Produktionshosting freigegeben.
 
 Mit Node.js 22 oder neuer:
 

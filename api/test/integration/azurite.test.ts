@@ -126,11 +126,11 @@ test("loopback HTTP smoke test exercises the fixed contract and CORS against rea
     ...init, headers: { origin, ...init.headers }, signal: AbortSignal.timeout(10_000),
   });
   try {
-    assert.equal((await call("admin/rooms", { method: "POST" })).status, 401);
-    assert.equal((await call("admin/rooms", {
+    assert.equal((await call("manage/rooms", { method: "POST" })).status, 401);
+    assert.equal((await call("manage/rooms", {
       method: "OPTIONS", headers: { "access-control-request-method": "POST", "access-control-request-headers": "x-functions-key,content-type" },
     })).status, 204);
-    const create = await call("admin/rooms", {
+    const create = await call("manage/rooms", {
       method: "POST", headers: { "x-functions-key": key, "content-type": "application/json" },
       body: JSON.stringify({ label: "Test-Runde" }),
     });
