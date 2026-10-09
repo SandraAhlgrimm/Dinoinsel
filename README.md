@@ -34,6 +34,8 @@ Tastatur: Pfeile/WASD laufen, E/Leertaste essen, F schubsen, Esc Pause/zurück. 
 
 `android/` enthält die nativen Quellen der Version **1.2**; die Bauanleitung steht in [`android/BUILDING.md`](android/BUILDING.md). Paketkennung `de.dinoinsel.game`, Speicherkennung sowie `window.dinoApp.pause()` und `.handleBack()` bleiben für Updates stabil. `snapshot()` liefert ausschließlich lesende Diagnosedaten.
 
+Unter [`api/`](api/README.md) liegt der Backend-Quellcode für eine spätere freiwillige Online-Erweiterung. Ein **Dev/Test-Backend ist in Azure bereitgestellt**, aber **noch nicht mit dem aktuellen Spiel verbunden**; eine Client-Anbindung fehlt noch. Ein Konfigurationseintrag allein aktiviert sie nicht. Die Webversion und APK **1.2 behalten ausschließlich lokale Bestenlisten**. Der Azure-Entwicklungsstand nutzt MSDN-Guthaben mit eingeschaltetem Ausgabenlimit und ist nicht als Produktionshosting freigegeben.
+
 Mit Node.js 22 oder neuer:
 
 ```sh
@@ -45,6 +47,18 @@ npm run test:browser
 ```
 
 Unter macOS wird vorhandenes Google Chrome genutzt, sonst Playwright-Chromium. `CHROME_PATH` kann einen vorhandenen Browser explizit wählen. CI installiert Chromium inklusive Linux-Systembibliotheken. Die GitHub-Actions-Pipeline prüft das Spiel vor der Veröffentlichung und lädt **ausschließlich `game/`** als Pages-Artefakt hoch. Weder native Quellen, Tests, Schlüssel noch Konfigurationen für einen Server werden als Website veröffentlicht.
+
+## Geheimnisse schützen
+
+Im öffentlichen Repository sind GitHub Secret Scanning und Push Protection aktiviert. Der zusätzliche [Secret-Scan](.github/workflows/secret-scan.yml) prüft die vollständige Git-Historie mit einer versions- und prüfsummengebundenen Gitleaks-Ausgabe. Er läuft nur auf dem CI-Runner, überträgt keinen Quellcode an einen externen Scan-Dienst und maskiert Fundwerte vollständig; Berichte werden nicht als Artefakte hochgeladen.
+
+Vor einem Push mit installiertem Gitleaks ebenfalls lokal prüfen:
+
+```sh
+gitleaks git . --config .gitleaks.toml --redact=100 --ignore-gitleaks-allow --log-opts="--all --full-history"
+```
+
+Azure-Zugriffsschlüssel, Profil-Token, Einladungen, signierte URLs, echte lokale Settings und private Android-Signierschlüssel gehören weder in Git noch in PR-Texte, Logs oder Release-Archive. Beispielkonfigurationen werden weiterhin auf echte Geheimnisse geprüft. Öffentliche API-Adressen und Ressourcenkennungen sind keine Zugangsschlüssel. Kein Scanner erkennt garantiert jedes Geheimnis; ein CI-Lauf nach dem Push ersetzt keine Prüfung vor der Veröffentlichung. Bei einer tatsächlichen Offenlegung zuerst den betroffenen Schlüssel widerrufen oder erneuern, nicht nur die Datei löschen.
 
 ## Lizenz
 

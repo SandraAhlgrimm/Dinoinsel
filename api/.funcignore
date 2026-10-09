@@ -1,0 +1,17 @@
+.git*
+.env*
+.local/
+.npm-cache/
+.tools/
+.package/
+.azure-local/
+.test-dist/
+local.settings*
+infra/
+test/
+tools/
+src/
+README.md
+tsconfig*
+*.log
+*.zip
