@@ -48,6 +48,18 @@ npm run test:browser
 
 Unter macOS wird vorhandenes Google Chrome genutzt, sonst Playwright-Chromium. `CHROME_PATH` kann einen vorhandenen Browser explizit wählen. CI installiert Chromium inklusive Linux-Systembibliotheken. Die GitHub-Actions-Pipeline prüft das Spiel vor der Veröffentlichung und lädt **ausschließlich `game/`** als Pages-Artefakt hoch. Weder native Quellen, Tests, Schlüssel noch Konfigurationen für einen Server werden als Website veröffentlicht.
 
+## Geheimnisse schützen
+
+Im öffentlichen Repository sind GitHub Secret Scanning und Push Protection aktiviert. Der zusätzliche [Secret-Scan](.github/workflows/secret-scan.yml) prüft die vollständige Git-Historie mit einer versions- und prüfsummengebundenen Gitleaks-Ausgabe. Er läuft nur auf dem CI-Runner, überträgt keinen Quellcode an einen externen Scan-Dienst und maskiert Fundwerte vollständig; Berichte werden nicht als Artefakte hochgeladen.
+
+Vor einem Push mit installiertem Gitleaks ebenfalls lokal prüfen:
+
+```sh
+gitleaks git . --config .gitleaks.toml --redact=100 --ignore-gitleaks-allow --log-opts="--all --full-history"
+```
+
+Azure-Zugriffsschlüssel, Profil-Token, Einladungen, signierte URLs, echte lokale Settings und private Android-Signierschlüssel gehören weder in Git noch in PR-Texte, Logs oder Release-Archive. Beispielkonfigurationen werden weiterhin auf echte Geheimnisse geprüft. Öffentliche API-Adressen und Ressourcenkennungen sind keine Zugangsschlüssel. Kein Scanner erkennt garantiert jedes Geheimnis; ein CI-Lauf nach dem Push ersetzt keine Prüfung vor der Veröffentlichung. Bei einer tatsächlichen Offenlegung zuerst den betroffenen Schlüssel widerrufen oder erneuern, nicht nur die Datei löschen.
+
 ## Lizenz
 
 Für den eigenen Quellcode und die eigenen Zeichnungen wurde **noch keine Open-Source-Lizenz ausgewählt**. Die öffentliche Sichtbarkeit allein erteilt keine pauschale Lizenz. Abhängigkeiten und Build-Werkzeuge behalten ihre jeweiligen Lizenzen; die Android-Bauanleitung dokumentiert deren Herkunft unter `android/BUILDING.md`.
