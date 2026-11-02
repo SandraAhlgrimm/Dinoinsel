@@ -24,7 +24,7 @@ from runtime_config import (
 )
 
 ANDROID = Path(__file__).resolve().parent
-WORKSPACE = ANDROID.parent.parent
+WORKSPACE = ANDROID.parent
 TOOLS = WORKSPACE / ".android-tools"
 BUILD = ANDROID / "build"
 DIST = ANDROID.parent / "dist"
@@ -33,8 +33,8 @@ APK = DIST / "Dinoinsel.apk"
 LEGACY_APK = DIST / "Dino-Insel.apk"
 APP_NAME = "Dinoinsel"
 PACKAGE = "de.dinoinsel.game"
-VERSION_NAME = "1.2"
-VERSION_CODE = 3
+VERSION_NAME = "1.3"
+VERSION_CODE = 4
 LOCK = json.loads((ANDROID / "dependency-lock.json").read_text(encoding="utf-8"))
 DEFAULT_EPOCH = 1767225600
 
