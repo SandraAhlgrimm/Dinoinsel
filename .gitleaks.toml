@@ -1,0 +1,34 @@
+title = "Dinoinsel secret protection"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "azure-functions-key"
+description = "Literal Azure Functions host, function or master key"
+regex = '''(?i)(?:x-functions-key|(?:function|host|master)[_-]?key)\s*["']?\s*[:=]\s*["']?([a-z0-9_+/=-]{32,512})'''
+secretGroup = 1
+keywords = ["x-functions-key", "function", "host", "master"]
+
+[[rules]]
+id = "azure-storage-key"
+description = "Literal Azure Storage account key"
+regex = '''(?i)(?:accountkey|azure_storage_key)\s*["']?\s*[:=]\s*["']?([a-z0-9+/]{43,128}={0,2})'''
+secretGroup = 1
+keywords = ["accountkey", "azure_storage_key"]
+
+[[rules]]
+id = "signed-url-credential"
+description = "A signed URL grants access and must not be published"
+regex = '''(?i)(?:[?&]|&amp;)sig=([a-z0-9%+/=_-]{16,512})'''
+secretGroup = 1
+keywords = ["sig="]
+
+[[rules]]
+id = "private-credential-file"
+description = "Private credentials or local configuration must not be tracked"
+path = '''(?i)(^|/)(?:\.env(?:\.[^/]+)?|local\.settings(?:\.[^/]+)?\.json|local\.properties|password\.txt|id_rsa|id_ed25519|[^/]+\.(?:p12|pfx|jks|keystore|key|pem))$|(^|/)(?:\.android-tools|signing|\.local|\.npm-cache)(/|$)'''
+
+[[rules.allowlists]]
+description = "Only example filenames are permitted; their contents still use all other rules"
+paths = ['''(^|/)(?:\.env\.example|local\.settings\.example\.json)$''']
