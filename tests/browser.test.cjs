@@ -70,6 +70,8 @@ async function ensureNoOverflow(page, checkStart = true) {
     await page.locator("#start-button").click();
     assert.equal((await snapshot(page)).species, "trike");
     assert.equal((await snapshot(page)).mode, "play");
+    assert.equal(await page.evaluate(() => document.querySelector("#world").getContext("2d").getImageData(5, 5, 1, 1).data[3]), 255,
+      "the world canvas must render an opaque scene after starting");
     await page.locator("#eat-button").click();
     assert.equal((await snapshot(page)).strength, 2);
     assert.ok((await snapshot(page)).scale > 1);
