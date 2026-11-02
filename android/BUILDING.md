@@ -2,10 +2,10 @@
 
 ## Verified, SDK-free build on macOS
 
-Run from the workspace directory that contains `dino-insel/`:
+Run from the repository root:
 
 ```sh
-./dino-insel/android/build.sh
+./android/build.sh
 ```
 
 Or run `./build.sh` from this directory. Prerequisites: macOS arm64 or
@@ -20,14 +20,14 @@ Microsoft JDK 17/21 macOS locations, then the JDK on `PATH`. An incompatible
 JDK 25 on `PATH` is not used. To select a specific installed JDK:
 
 ```sh
-JAVA_HOME="/path/to/jdk-17/Contents/Home" ./dino-insel/android/build.sh
+JAVA_HOME="/path/to/jdk-17/Contents/Home" ./android/build.sh
 ```
 
 After the first build, the complete build can run without network access:
 
 ```sh
-./dino-insel/android/build.sh --offline
-./dino-insel/android/build.sh --verify --offline
+./android/build.sh --offline
+./android/build.sh --verify --offline
 ```
 
 `--offline` controls **build-tool downloads**, not the app's leaderboard
@@ -36,24 +36,24 @@ explicit JSON block in the bundled game, as described below.
 
 Outputs:
 
-- `dino-insel/dist/Dinoinsel.apk` — signed, installable version 1.2.
-- `dino-insel/dist/Dinoinsel.apk.sha256` — SHA-256 checksum.
-- `dino-insel/dist/BUILD-INFO.json` — exact source/dependency/asset hashes,
+- `dist/Dinoinsel.apk` — signed, installable version 1.3.
+- `dist/Dinoinsel.apk.sha256` — SHA-256 checksum.
+- `dist/BUILD-INFO.json` — exact source/dependency/asset hashes,
   API configuration/mode, certificate fingerprint, binary manifest,
   package metadata, and verification results.
-- `dino-insel/android/build/` — disposable native compilation intermediates.
+- `android/build/` — disposable native compilation intermediates.
 
 Older `Dino-Insel.apk` artifacts are not deleted or overwritten by this
 renamed release.
 
-The build reads the actual `dino-insel/game/index.html` and packages its exact
+The build reads the actual `game/index.html` and packages its exact
 bytes as `assets/index.html`. It never edits the game and never creates a
 placeholder game. If the game is absent, incomplete, or missing its required
 configuration block, the normal build fails without publishing an APK.
 Native/toolchain compilation can still be checked independently:
 
 ```sh
-./dino-insel/android/build.sh --check --offline
+./android/build.sh --check --offline
 ```
 
 `--check` compiles the offline shell's resources, Java, DEX, and signing helper
@@ -68,7 +68,7 @@ Do not mistake that older distribution for a successful new build.
 | --- | --- |
 | Package | `de.dinoinsel.game` |
 | Launcher name | **Dinoinsel** |
-| Version | **1.2 / version code 3** |
+| Version | **1.3 / version code 4** |
 | Minimum Android | Android 8.0 / API 26 |
 | Target / compile API | 35 / Android 15 |
 | Native libraries | None; architecture-independent DEX |
@@ -175,21 +175,27 @@ contact Azure or any configured API.
 ## Signing and reproducibility
 
 An initial build creates a random-password, 3072-bit RSA **development**
-key at the following paths; version 1.2 **reuses the existing key and alias**:
+key at the following paths, relative to the repository root:
 
 ```text
 .android-tools/signing/dino-insel-development.p12
 .android-tools/signing/password.txt
 ```
 
-That directory is outside the distributable `dino-insel/` source tree,
-has mode `0700`, and its private files have mode `0600`. The whole tool-cache
+That directory has mode `0700`, and its private files have mode `0600`. The whole tool-cache
 directory is ignored by Git. Do **not** include `.android-tools/` in a source
 archive or upload the signing files. Also exclude `android/build/`, which
 contains disposable compilation output and deliberately configured test
 fixtures, from distributable source archives. The APK contains only the public
 certificate, never the private key or password. This is a locally generated
 development identity, not a production or Play Store signing identity.
+
+**Version 1.3 intentionally uses a new signing key, approved by the owner
+because the old key is unavailable.** It cannot update the 1.0/1.2 APK.
+Uninstalling the old app deletes its local saved game; a fresh installation
+is required. Browser saves are separate and unaffected. Back up the new key
+and password privately for subsequent updates. The build's certificate
+continuity checks remain enabled for all subsequent builds.
 
 Keep the key and password together, backed up privately, if future builds
 must update an installed copy without uninstalling. A freshly generated key
@@ -209,10 +215,10 @@ per-build randomness. `SOURCE_DATE_EPOCH` can override ZIP timestamps
 (the ZIP format clamps dates before 1980). Compare two complete builds:
 
 ```sh
-./dino-insel/android/build.sh --offline
-shasum -a 256 dino-insel/dist/Dinoinsel.apk
-./dino-insel/android/build.sh --offline
-shasum -a 256 dino-insel/dist/Dinoinsel.apk
+./android/build.sh --offline
+shasum -a 256 dist/Dinoinsel.apk
+./android/build.sh --offline
+shasum -a 256 dist/Dinoinsel.apk
 ```
 
 The build does not invoke or silently accept Android SDK license terms.
@@ -269,7 +275,7 @@ Every normal build, and every `--verify`, checks:
 Run without a final game or any live API:
 
 ```sh
-./dino-insel/android/build.sh --self-test --offline
+./android/build.sh --self-test --offline
 ```
 
 In addition to normal build prerequisites, this check uses an existing
@@ -328,7 +334,7 @@ To keep Gradle's cache in this workspace:
 
 ```sh
 GRADLE_USER_HOME="$PWD/.android-tools/gradle" \
-  gradle -p dino-insel/android --no-daemon assembleRelease
+  gradle -p android --no-daemon assembleRelease
 ```
 
 The optional Gradle release is unsigned; use `build.sh` for the signed

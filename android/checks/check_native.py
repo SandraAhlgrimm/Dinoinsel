@@ -115,7 +115,7 @@ def run_checks(build, java_home, paths):
         (directory / "fixture.html").write_bytes(game)
         build.require(report["permissions"] == expected_permissions(config),
                       "Fixture permission mismatch.")
-        build.require(report["versionName"] == "1.2" and report["versionCode"] == 3
+        build.require(report["versionName"] == "1.3" and report["versionCode"] == 4
                       and report["appName"] == "Dinoinsel", "Upgrade metadata mismatch.")
         gradle_manifest = directory / "GradleManifest.xml"
         write_manifest(build.ANDROID / "src/main/AndroidManifest.xml",

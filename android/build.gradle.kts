@@ -19,8 +19,8 @@ android {
         applicationId = "de.dinoinsel.game"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
 
     sourceSets["main"].assets.setSrcDirs(listOf(gradleInputs.map { it.dir("assets") }))
@@ -34,7 +34,7 @@ android {
     }
 
     signingConfigs.getByName("debug") {
-        storeFile = file("../../.android-tools/signing/gradle-debug.keystore")
+        storeFile = file("../.android-tools/signing/gradle-debug.keystore")
     }
 
     buildTypes {
