@@ -218,7 +218,7 @@ test("1.0 and phase-one saves migrate all old progress and initialize the maths 
   old.cleared = ["tree-0"];
   old.stats.trees = 1;
   const migrated = C.validateProgress(old);
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   assert.equal(migrated.selected, "trike");
   assert.equal(migrated.dinos.trike.meals, 12);
   assert.equal(migrated.dinos.trex.meals, 7);

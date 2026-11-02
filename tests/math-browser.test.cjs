@@ -93,7 +93,7 @@ async function keyboardAnswer(page, answer) {
     }
 
     const { page } = await game({ save: fixtures.nearMeal() });
-    assert.equal(await page.locator("body > .modal-wrap").count(), 4, "dialogs must be independent siblings");
+    assert.equal(await page.locator("body > .modal-wrap").count(), 5, "dialogs must be independent siblings");
     await page.locator("#start-button").tap();
     await page.locator("#eat-button").tap();
     let state = await snapshot(page);
@@ -320,7 +320,7 @@ async function keyboardAnswer(page, answer) {
     await legacy.locator("#start-button").tap();
     await nativePause(legacy);
     const migrated = await legacy.evaluate(() => JSON.parse(localStorage.getItem("dino-insel-v1")));
-    assert.equal(migrated.version, 2);
+    assert.equal(migrated.version, 3);
     assert.equal(migrated.dinos.trex.meals, 7);
     assert.equal(migrated.dinos.trike.meals, 12);
     assert.equal(migrated.math.pending, null);

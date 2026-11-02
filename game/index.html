@@ -107,7 +107,7 @@
     .dino-card { position: relative; text-align: left; border-radius: 16px; padding: 10px 12px 12px; min-width: 0; border: 2px solid var(--cp-border); transition: border-color .15s, background .15s; }
     .dino-card[aria-pressed="true"] { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
     .dino-card:hover { border-color: var(--cp-accent); }
-    .dino-card canvas { display: block; width: 100%; height: 91px; }
+    .dino-card canvas, .dino-card img { display: block; width: 100%; height: 91px; object-fit: contain; }
     .dino-card strong { display: block; font-size: 16px; line-height: 1.2; letter-spacing: -.3px; }
     .dino-card .diet { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--cp-text-muted); margin-top: 6px; }
     .dino-card .diet svg { width: 14px; height: 14px; }
@@ -125,7 +125,7 @@
     #world { display: block; width: 100%; height: 100%; background: var(--cp-bg); }
     .hud { position: absolute; inset: 16px 20px auto; display: flex; align-items: flex-start; gap: 12px; pointer-events: none; }
     .player-panel { display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; min-width: 228px; }
-    #player-portrait { width: 60px; height: 58px; }
+    #player-portrait { display: grid; place-items: center; width: 60px; height: 58px; border-radius: 12px; background: var(--cp-accent-soft); font-size: 30px; }
     #player-name { font-size: 17px; font-weight: 800; margin-bottom: 5px; letter-spacing: -.3px; }
     .player-stats { display: flex; gap: 14px; font-size: 12px; color: var(--cp-text-muted); }
     .player-stats strong { color: var(--cp-accent); font-size: 17px; }
@@ -159,6 +159,13 @@
     #toast { position: absolute; top: 124px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; background: var(--cp-surface); color: var(--cp-text); border: 2px solid var(--cp-accent); font-size: 18px; font-weight: 750; max-width: min(480px, 65vw); text-align: center; pointer-events: none; z-index: 3; }
     .modal-wrap { position: absolute; inset: 0; background: var(--cp-overlay); display: grid; place-items: center; padding: 20px; z-index: 5; }
     .modal { width: 420px; max-width: 100%; max-height: 100%; overflow-y: auto; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 16px; padding: 28px; text-align: center; }
+    .world-editor-wrap { display: block; padding: 0; background: transparent; pointer-events: none; }
+    .editor-toolbar { position: absolute; inset: auto 12px max(12px, env(safe-area-inset-bottom)); width: min(900px, calc(100% - 24px)); margin: 0 auto; padding: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--cp-border); border-radius: 16px; background: var(--cp-panel-strong); box-shadow: var(--cp-shadow); pointer-events: auto; }
+    .editor-toolbar button { min-height: 44px; padding: 9px 13px; font-size: 14px; }
+    .editor-toolbar button[aria-pressed="true"] { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+    .editor-note { flex-basis: 100%; margin: 0 !important; font-size: 13px !important; }
+    #game.editor-active .hud, #game.editor-active .map-panel, #game.editor-active .controls { display: none; }
+    #world.editor-canvas { cursor: crosshair; }
     .modal h2 { margin: 8px 0; font-size: 30px; letter-spacing: -.8px; }
     .modal p { color: var(--cp-text-muted); font-size: 14px; line-height: 1.6; }
     .modal .modal-mark { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--cp-accent-soft); color: var(--cp-accent); }
@@ -200,6 +207,8 @@
       #math-keypad button { min-height: 48px; }
       .score-table { font-size: 12px; }
       .score-table th, .score-table td { padding: 10px 4px; }
+      .editor-toolbar { gap: 6px; padding: 8px; }
+      .editor-toolbar button { min-height: 42px; padding: 8px 10px; font-size: 12px; }
     }
     .fatal { position: fixed; inset: 20px; z-index: 50; background: var(--cp-surface); border: 2px solid var(--cp-danger); border-radius: 16px; padding: 24px; }
     @media (max-height: 690px) and (min-width: 761px) {
@@ -209,7 +218,7 @@
       .intro h1 { font-size: 36px; }
       .intro > p { font-size: 14px; }
       .island-preview { height: 200px; }
-      .dino-card canvas { height: 70px; }
+      .dino-card canvas, .dino-card img { height: 70px; }
       .dino-card strong { font-size: 14px; }
       .choose-heading { margin-bottom: 10px; }
       #dino-description { margin-top: 10px; font-size: 12px; min-height: 38px; }
@@ -238,14 +247,14 @@
       #start-button { width: 100%; }
       .save-note { order: 2; }
       .dino-card { padding: 8px; }
-      .dino-card canvas { height: 76px; }
+      .dino-card canvas, .dino-card img { height: 76px; }
       .dino-card strong { font-size: 13px; }
       .dino-card .diet { font-size: 10px; }
       #dino-cards { gap: 8px; }
       .choose-heading h2 { font-size: 20px; }
       .hud { inset: 10px; gap: 8px; }
       .player-panel { min-width: 0; padding: 8px; gap: 6px; }
-      #player-portrait { width: 36px; height: 40px; }
+      #player-portrait { width: 36px; height: 40px; font-size: 22px; }
       #player-name { font-size: 13px; }
       .player-stats { font-size: 10px; gap: 8px; }
       .player-stats strong { font-size: 14px; }
@@ -257,6 +266,7 @@
       .map-panel { top: 64px; right: 10px; width: 106px; }
       #mini-map { width: 92px; height: 62px; }
       .map-label { font-size: 9px; }
+      .editor-toolbar { bottom: max(8px, env(safe-area-inset-bottom)); }
       .stick-wrap { left: 16px; bottom: 18px; }
       #joystick { width: 106px; height: 106px; }
       #stick-knob { left: 24px; top: 24px; }
@@ -303,7 +313,7 @@
         <h1>Heute bist<br>du der Dino.</h1>
         <p>Finde Futter, werde größer und entdecke deine Insel. Was wohl hinter dem nächsten Baum wartet?</p>
         <div class="island-preview">
-          <canvas id="preview" aria-label="Eine grüne Dinoinsel mit einem friedlichen Vulkan"></canvas>
+          <img id="preview" alt="Eine grüne Dinoinsel mit einem friedlichen Vulkan">
           <div class="preview-caption"><svg><use href="#i-volcano"/></svg>Dieser Vulkan bricht niemals aus.</div>
         </div>
       </section>
@@ -326,7 +336,7 @@
     <canvas id="world" aria-label="Die Dinoinsel. Bewege dich mit dem Steuerkreis oder den Pfeiltasten."></canvas>
     <div class="hud">
       <div class="player-panel">
-        <canvas id="player-portrait" aria-hidden="true"></canvas>
+        <div id="player-portrait" aria-hidden="true">🦖</div>
         <div>
           <div id="player-name"></div>
           <div class="player-stats"><span>Kraft <strong id="strength">1</strong></span><span>Größe <strong id="size">100 %</strong></span></div>
@@ -368,8 +378,26 @@
         <button id="help-button">So spielst du</button>
         <button id="practice-button">Mathe üben</button>
         <button id="pause-scores-button">Meine Bestenliste</button>
+        <button id="edit-world-button">Welt gestalten</button>
         <button id="change-button">Einen anderen Dino wählen</button>
       </div>
+    </div>
+  </div>
+  <div id="world-editor-modal" class="modal-wrap world-editor-wrap" role="dialog" aria-modal="true" aria-labelledby="editor-title" hidden>
+    <div class="editor-toolbar">
+      <strong id="editor-title">Welt gestalten</strong>
+      <button type="button" data-editor-tool="land" aria-pressed="true">Landfläche</button>
+      <button type="button" data-editor-tool="tree" aria-pressed="false">Baum</button>
+      <button type="button" data-editor-tool="rock" aria-pressed="false">Stein</button>
+      <button type="button" data-editor-tool="food" aria-pressed="false">Futter</button>
+      <button type="button" data-editor-tool="erase" aria-pressed="false">Objekt entfernen</button>
+      <button type="button" data-editor-tool="water" aria-pressed="false">Land entfernen</button>
+      <button type="button" id="editor-overview-button">Ganze Welt zeigen</button>
+      <button type="button" id="editor-zoom-out-button" aria-label="Herauszoomen">−</button>
+      <button type="button" id="editor-zoom-in-button" aria-label="Hineinzoomen">+</button>
+      <button type="button" id="editor-player-button">Zum Dino</button>
+      <button type="button" id="editor-done-button" class="primary">Fertig</button>
+      <p id="editor-note" class="editor-note" role="status" aria-live="polite">Tippe auf die Karte, um eine Landfläche zu ergänzen. Ziehe die Karte zum Verschieben.</p>
     </div>
   </div>
   <div id="help-modal" class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
@@ -380,6 +408,7 @@
         <div class="help-step"><svg><use href="#i-move"/></svg><div><strong>Laufe los.</strong>Ziehe den Kreis links in die Richtung, in die dein Dino laufen soll.</div></div>
         <div class="help-step"><svg><use href="#i-leaf"/></svg><div><strong>Futter macht groß.</strong>Gehe nah heran und tippe auf „Essen“. Pflanzenfresser mögen Büsche. Fleischfresser fressen kleinere Dinos.</div></div>
         <div class="help-step"><svg><use href="#i-push"/></svg><div><strong>Mach den Weg frei.</strong>Mit „Schubsen“ fallen Bäume um und zerbrechen Steine. Manche brauchen mehr Kraft oder mehrere Schubser.</div></div>
+        <div class="help-step"><svg><use href="#i-move"/></svg><div><strong>Gestalte deine Insel.</strong>In der Pause kannst du Land ergänzen oder entfernen und eigene Bäume, Steine und Futter platzieren.</div></div>
         <div class="help-step"><svg><use href="#i-volcano"/></svg><div><strong>Du bist sicher.</strong>Niemand frisst deinen Dino. Der Vulkan bricht niemals aus. Du kannst nicht verlieren.</div></div>
         <div class="help-step"><svg><use href="#i-star"/></svg><div><strong>Eine kleine Mathepause.</strong>Nach vier Mahlzeiten oder etwa 90 Sekunden Spielzeit rechnest du kurz. Alle Dinos warten. Löse die Aufgabe, dann geht es mit „Weiter auf die Insel“ weiter. Tipps helfen dir, Fehler kosten keine Punkte.</div></div>
       </div>
@@ -450,11 +479,13 @@
       ];
       const PLAYABLE = SPECIES.filter(s => !s.npcOnly);
       const MAP = Object.freeze({
-        width: 2800, height: 1900, centerX: 1400, centerY: 950, radiusX: 1320, radiusY: 840,
+        width: 4200, height: 2800, centerX: 1400, centerY: 950, radiusX: 1320, radiusY: 840,
         startX: 1310, startY: 1000,
         volcano: Object.freeze({ x: 1660, y: 825, rx: 156, ry: 92, dormant: true }),
         ponds: Object.freeze([{ x: 720, y: 555, rx: 208, ry: 118 }, { x: 2150, y: 1300, rx: 150, ry: 102 }])
       });
+      const LAND_PATCH = Object.freeze({ rx: 180, ry: 140 });
+      const MAX_LAND_PATCHES = 80, MAX_BUILT_OBJECTS = 120;
       const species = id => SPECIES.find(s => s.id === id);
       const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
       const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -579,24 +610,43 @@
         const dinos = {};
         PLAYABLE.forEach(s => { dinos[s.id] = { meals: 0, mathSolved: 0 }; });
         return {
-          version: 2, selected: "trex", dinos, cleared: [], position: { x: MAP.startX, y: MAP.startY },
+          version: 3, selected: "trex", dinos, cleared: [], position: { x: MAP.startX, y: MAP.startY },
+          map: { land: [], objects: [] },
           stats: { meals: 0, mathSolved: 0, trees: 0, rocks: 0, volcano: false, celebrated: false }, sound: false, math: emptyMath()
         };
       }
       function validateProgress(data) {
-        if (!data || ![1, 2].includes(data.version) || !PLAYABLE.some(s => s.id === data.selected)) throw new Error("Unbekanntes Spielstand-Format.");
+        if (!data || ![1, 2, 3].includes(data.version) || !PLAYABLE.some(s => s.id === data.selected)) throw new Error("Unbekanntes Spielstand-Format.");
         const count = validCount;
         if (!data.dinos || !PLAYABLE.every(s => data.dinos[s.id] && count(data.dinos[s.id].meals))) throw new Error("Ungültige Dino-Größen im Spielstand.");
-        if (!Array.isArray(data.cleared) || data.cleared.length > 88 || data.cleared.some(id => typeof id !== "string" || !/^(tree|rock)-\d+$/.test(id))) throw new Error("Ungültige Hindernisse im Spielstand.");
+        const map = data.version < 3 ? { land: [], objects: [] } : data.map;
+        if (!map || !Array.isArray(map.land) || map.land.length > MAX_LAND_PATCHES ||
+            !Array.isArray(map.objects) || map.objects.length > MAX_BUILT_OBJECTS) throw new Error("Ungültige Weltgestaltung im Spielstand.");
+        const inBounds = (item, margin = 0) => Number.isFinite(item.x) && Number.isFinite(item.y) &&
+          item.x >= margin && item.x <= MAP.width - margin && item.y >= margin && item.y <= MAP.height - margin;
+        if (map.land.some((land, i) => !land || land.id !== "land-" + i || !inBounds(land, Math.max(LAND_PATCH.rx, LAND_PATCH.ry)))) throw new Error("Ungültige Landfläche im Spielstand.");
+        const connectedLand = [];
+        for (const patch of map.land) {
+          if (!touchesLand(patch.x, patch.y, connectedLand)) throw new Error("Nicht verbundene Landfläche im Spielstand.");
+          connectedLand.push(patch);
+        }
+        if (map.objects.some((item, i) => item && (item.id !== "custom-" + i ||
+            !["tree", "rock", "food"].includes(item.type) || !inBounds(item, 35) ||
+            !terrainAllows(item.x, item.y, item.type === "rock" ? 27 : 20, map.land)))) throw new Error("Ungültiger Weltgegenstand im Spielstand.");
+        if (!Array.isArray(data.cleared) || data.cleared.length > 88 + MAX_BUILT_OBJECTS ||
+            data.cleared.some(id => typeof id !== "string" || !/^(tree|rock)-\d+$/.test(id) && !/^custom-\d+$/.test(id))) throw new Error("Ungültige Hindernisse im Spielstand.");
         if (new Set(data.cleared).size !== data.cleared.length) throw new Error("Doppelte Hindernisse im Spielstand.");
         if (data.cleared.some(id => {
-          const parts = id.split("-");
-          return String(Number(parts[1])) !== parts[1] || Number(parts[1]) > (parts[0] === "tree" ? 62 : 24);
+          const parts = id.split("-"), index = Number(parts[1]);
+          if (String(index) !== parts[1]) return true;
+          if (parts[0] === "custom") return !map.objects[index] || !["tree", "rock"].includes(map.objects[index].type);
+          return index > (parts[0] === "tree" ? 62 : 24);
         })) throw new Error("Unbekanntes Hindernis im Spielstand.");
         const p = data.position;
         if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || p.x < 0 || p.x > MAP.width || p.y < 0 || p.y > MAP.height) throw new Error("Ungültige Position im Spielstand.");
         if (!data.stats || !["meals", "trees", "rocks"].every(k => count(data.stats[k])) || typeof data.stats.volcano !== "boolean" || typeof data.stats.celebrated !== "boolean" || typeof data.sound !== "boolean") throw new Error("Ungültiger Fortschritt im Spielstand.");
         const migrated = JSON.parse(JSON.stringify(data));
+        if (data.version < 3) migrated.map = { land: [], objects: [] };
         for (const s of PLAYABLE) {
           const dino = migrated.dinos[s.id];
           if (dino.mathSolved === undefined && data.version === 1) dino.mathSolved = 0;
@@ -608,7 +658,7 @@
         if (migrated.stats.mathSolved !== scores.mathSolved) throw new Error("Ungültige Mathepunkte im Spielstand.");
         if (migrated.math === undefined && data.version === 1) migrated.math = emptyMath(scores.mathSolved);
         validateMath(migrated.math, migrated.stats, migrated.dinos);
-        migrated.version = 2;
+        migrated.version = 3;
         return migrated;
       }
       function localScores(progress) {
@@ -620,13 +670,26 @@
         const mathSolved = rows.reduce((sum, row) => sum + row.mathSolved, 0);
         return { rows, meals, mathSolved, total: meals + mathSolved };
       }
-      function terrainAllows(x, y, radius) {
-        if (Math.pow((x - MAP.centerX) / (MAP.radiusX - radius - 20), 2) + Math.pow((y - MAP.centerY) / (MAP.radiusY - radius - 20), 2) >= 1) return false;
+      function terrainAllows(x, y, radius, land = []) {
+        if (x - radius < 0 || x + radius > MAP.width || y - radius < 0 || y + radius > MAP.height) return false;
+        const onEllipse = (cx, cy, rx, ry) => rx > radius && ry > radius &&
+          Math.pow((x - cx) / (rx - radius), 2) + Math.pow((y - cy) / (ry - radius), 2) < 1;
+        const onMainland = onEllipse(MAP.centerX, MAP.centerY, MAP.radiusX - 20, MAP.radiusY - 20);
+        const onAddedLand = land.some(patch => onEllipse(patch.x, patch.y, LAND_PATCH.rx, LAND_PATCH.ry));
+        if (!onMainland && !onAddedLand) return false;
         for (const pond of MAP.ponds) {
           if (Math.pow((x - pond.x) / (pond.rx + radius), 2) + Math.pow((y - pond.y) / (pond.ry + radius), 2) < 1) return false;
         }
         const v = MAP.volcano;
         return Math.pow((x - v.x) / (v.rx + radius), 2) + Math.pow((y - v.y) / (v.ry + radius), 2) >= 1;
+      }
+      function touchesLand(x, y, land) {
+        if (terrainAllows(x, y, 0, land)) return true;
+        for (let i = 0; i < 32; i++) {
+          const angle = i / 32 * Math.PI * 2;
+          if (terrainAllows(x + Math.cos(angle) * LAND_PATCH.rx, y + Math.sin(angle) * LAND_PATCH.ry, 0, land)) return true;
+        }
+        return false;
       }
       class World {
         constructor(progress, seed = 7217) {
@@ -663,6 +726,11 @@
             const required = 2 + Math.floor(this.random() * 6);
             this.addObstacle("rock", p.x, p.y, required, .7 + required * .1);
           }
+          for (const item of this.progress.map.objects) {
+            if (!item) continue;
+            if (item.type === "food") this.food.push({ id: item.id, x: item.x, y: item.y, hiddenUntil: 0 });
+            else this.addObstacle(item.type, item.x, item.y, item.type === "tree" ? 1 : 2, 1, item.id);
+          }
           const ids = new Set(this.obstacles.map(o => o.id));
           if (this.progress.cleared.some(id => !ids.has(id))) throw new Error("Unbekanntes Hindernis im Spielstand.");
           this.food.push({ id: "food-0", x: MAP.startX + 74, y: MAP.startY + 48, hiddenUntil: 0 });
@@ -682,20 +750,88 @@
             });
           }
         }
-        addObstacle(kind, x, y, required, scale) {
+        addObstacle(kind, x, y, required, scale, id = null) {
           const index = this.obstacles.filter(o => o.kind === kind).length;
-          const id = kind + "-" + index;
+          const obstacleId = id || kind + "-" + index;
           this.obstacles.push({
-            id, kind, x, y, required, scale, radius: (kind === "tree" ? 19 : 27) * scale,
+            id: obstacleId, kind, x, y, required, scale, radius: (kind === "tree" ? 19 : 27) * scale,
             hp: required * 2, maxHp: required * 2,
-            cleared: this.progress.cleared.includes(id), fall: 0, hit: 0
+            cleared: this.progress.cleared.includes(obstacleId), fall: 0, hit: 0
           });
         }
-        randomPoint(clearance, fromStart = 0) {
+        placeLand(x, y) {
+          if (!Number.isFinite(x) || !Number.isFinite(y) || x < LAND_PATCH.rx || x > MAP.width - LAND_PATCH.rx ||
+              y < LAND_PATCH.ry || y > MAP.height - LAND_PATCH.ry) return { ok: false, reason: "bounds" };
+          if (this.progress.map.land.length >= MAX_LAND_PATCHES) return { ok: false, reason: "limit" };
+          const patches = this.progress.map.land;
+          if (!touchesLand(x, y, patches)) return { ok: false, reason: "disconnected" };
+          const patch = { id: "land-" + patches.length, x, y };
+          patches.push(patch);
+          return { ok: true, id: patch.id };
+        }
+        removeLandAt(x, y) {
+          let index = -1, nearest = 1;
+          this.progress.map.land.forEach((patch, i) => {
+            const distance = Math.hypot((x - patch.x) / LAND_PATCH.rx, (y - patch.y) / LAND_PATCH.ry);
+            if (distance < nearest) { index = i; nearest = distance; }
+          });
+          if (index < 0) return { ok: false, reason: "no-land" };
+          const patches = this.progress.map.land.filter((_, i) => i !== index);
+          const occupied = (entity, radius) => !terrainAllows(entity.x, entity.y, radius, patches);
+          if (occupied(this.player, this.playerRadius()) ||
+              this.npcs.some(npc => npc.hiddenUntil === 0 && occupied(npc, npc.scale * 18)) ||
+              this.food.some(food => occupied(food, 20)) ||
+              this.obstacles.some(item => !item.cleared && occupied(item, item.radius))) return { ok: false, reason: "occupied" };
+          const connected = [];
+          const pending = patches.slice();
+          while (pending.length) {
+            const next = pending.findIndex(patch => touchesLand(patch.x, patch.y, connected));
+            if (next < 0) return { ok: false, reason: "disconnects" };
+            const [patch] = pending.splice(next, 1);
+            connected.push(patch);
+          }
+          patches.forEach((patch, i) => { patch.id = "land-" + i; });
+          this.progress.map.land = patches;
+          return { ok: true };
+        }
+        placeObject(type, x, y) {
+          if (!["tree", "rock", "food"].includes(type)) throw new Error("Unbekannter Weltgegenstand.");
+          if (!Number.isFinite(x) || !Number.isFinite(y) || x < 35 || x > MAP.width - 35 || y < 35 || y > MAP.height - 35) return { ok: false, reason: "bounds" };
+          if (this.progress.map.objects.length >= MAX_BUILT_OBJECTS) return { ok: false, reason: "limit" };
+          const radius = type === "rock" ? 27 : 20;
+          if (!terrainAllows(x, y, radius, this.progress.map.land)) return { ok: false, reason: "water" };
+          if (Math.hypot(x - this.player.x, y - this.player.y) < radius + this.playerRadius() + 14 ||
+              this.obstacles.some(item => !item.cleared && Math.hypot(x - item.x, y - item.y) < radius + item.radius + 8) ||
+              this.food.some(item => Math.hypot(x - item.x, y - item.y) < radius + 22) ||
+              this.npcs.some(item => item.hiddenUntil === 0 && Math.hypot(x - item.x, y - item.y) < radius + item.scale * 20)) {
+            return { ok: false, reason: "occupied" };
+          }
+          const item = { id: "custom-" + this.progress.map.objects.length, type, x, y };
+          this.progress.map.objects.push(item);
+          if (type === "food") this.food.push({ id: item.id, x, y, hiddenUntil: 0 });
+          else this.addObstacle(type, x, y, type === "tree" ? 1 : 2, 1, item.id);
+          return { ok: true, id: item.id };
+        }
+        eraseCustomAt(x, y) {
+          let target = null, nearest = 88;
+          for (const item of [...this.obstacles, ...this.food]) {
+            if (!item.id.startsWith("custom-")) continue;
+            const distance = Math.hypot(x - item.x, y - item.y);
+            if (distance < nearest) { target = item; nearest = distance; }
+          }
+          if (!target) return false;
+          const index = Number(target.id.slice("custom-".length));
+          this.progress.map.objects[index] = null;
+          this.progress.cleared = this.progress.cleared.filter(id => id !== target.id);
+          this.obstacles = this.obstacles.filter(item => item !== target);
+          this.food = this.food.filter(item => item !== target);
+          return true;
+        }
+        randomPoint(clearance, fromStart = 0, allowAddedLand = false) {
           for (let attempt = 0; attempt < 3000; attempt++) {
             const x = 160 + this.random() * (MAP.width - 320);
             const y = 180 + this.random() * (MAP.height - 360);
-            if (!terrainAllows(x, y, clearance)) continue;
+            if (!terrainAllows(x, y, clearance, allowAddedLand ? this.progress.map.land : [])) continue;
             if (Math.hypot(x - MAP.startX, y - MAP.startY) < fromStart) continue;
             if (this.obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.radius + clearance)) continue;
             return { x, y };
@@ -703,7 +839,7 @@
           throw new Error("Auf der Insel konnte kein freier Platz gefunden werden.");
         }
         canStand(x, y, radius) {
-          return terrainAllows(x, y, radius) && !this.obstacles.some(o => !o.cleared && Math.hypot(x - o.x, y - o.y) < radius + o.radius);
+          return terrainAllows(x, y, radius, this.progress.map.land) && !this.obstacles.some(o => !o.cleared && Math.hypot(x - o.x, y - o.y) < radius + o.radius);
         }
         ensurePlayerClearance() {
           const radius = this.playerRadius();
@@ -862,7 +998,7 @@
         updateNpc(npc, dt) {
           if (npc.hiddenUntil !== 0) {
             if (this.time < npc.hiddenUntil) return;
-            const point = this.randomPoint(45, 145);
+            const point = this.randomPoint(45, 145, true);
             npc.x = point.x; npc.y = point.y;
             npc.hiddenUntil = 0;
             npc.scale = .6 + this.random() * .7;
@@ -956,7 +1092,7 @@
           return validateProgress(this.progress);
         }
       }
-      return { SPECIES, PLAYABLE, MAP, World, MATH_RULES, species, growth, strength, clamp, distance, randomGenerator,
+      return { SPECIES, PLAYABLE, MAP, LAND_PATCH, World, MATH_RULES, species, growth, strength, clamp, distance, randomGenerator,
         emptyProgress, validateProgress, localScores, terrainAllows, emptyMath, generateMathTask, mathResult,
         scheduleMath, editMathInput, answerMath, revealMathHint, mathHint, finishMath };
     })();
@@ -974,11 +1110,14 @@
       const palette = {};
       let mode = "home", selected = "trex", world, camera = { x: C.MAP.startX, y: C.MAP.startY };
       let cssWidth = 0, cssHeight = 0, zoom = 1, lastTime = 0, uiClock = 0, saveClock = 0, toastUntil = 0;
-      let pointerId = null, axis = { x: 0, y: 0 }, audio = null, saveError = "", inputError = false;
+      let pointerId = null, editorPointer = null, editorSuppressClick = false, editorTool = "land";
+      let axis = { x: 0, y: 0 }, audio = null, saveError = "", inputError = false;
       let scoresReturn = "home", scoresOpener = null;
       const keys = new Set();
       const blockedKeys = new Set();
       const gameCanvas = $("world"), ctx = gameCanvas.getContext("2d");
+      const thumbnailCanvas = document.createElement("canvas");
+      const thumbnailContext = thumbnailCanvas.getContext("2d");
       const grassRandom = C.randomGenerator(8319);
       const decorations = [];
       for (let i = 0; i < 430; i++) {
@@ -1214,12 +1353,18 @@
         }
         g.restore();
       }
-      function terrain(g, time, detail) {
+      function terrain(g, time, detail, addedLand = []) {
         const m = C.MAP;
         ellipse(g, m.centerX, m.centerY + 17, m.radiusX + 46, m.radiusY + 38, palette.link, .14);
         ellipse(g, m.centerX, m.centerY, m.radiusX + 15, m.radiusY + 14, palette.warning, .18);
         ellipse(g, m.centerX, m.centerY, m.radiusX, m.radiusY, palette.bg);
         ellipse(g, m.centerX, m.centerY, m.radiusX - 30, m.radiusY - 26, palette.success, .105);
+        for (const patch of addedLand) {
+          ellipse(g, patch.x, patch.y + 12, C.LAND_PATCH.rx + 24, C.LAND_PATCH.ry + 20, palette.link, .14);
+          ellipse(g, patch.x, patch.y, C.LAND_PATCH.rx + 14, C.LAND_PATCH.ry + 12, palette.warning, .18);
+          ellipse(g, patch.x, patch.y, C.LAND_PATCH.rx, C.LAND_PATCH.ry, palette.bg);
+          ellipse(g, patch.x, patch.y, C.LAND_PATCH.rx - 24, C.LAND_PATCH.ry - 22, palette.success, .105);
+        }
         g.save(); g.lineWidth = 85; g.lineCap = "round"; g.strokeStyle = palette["bg-elevated"]; g.globalAlpha = .6;
         g.beginPath(); g.moveTo(400, 1020); g.bezierCurveTo(920, 1350, 1240, 790, 1700, 1110); g.bezierCurveTo(2100, 1400, 2150, 700, 2410, 790); g.stroke();
         g.lineWidth = 48; g.beginPath(); g.moveTo(1000, 1380); g.bezierCurveTo(1450, 1290, 1170, 850, 1470, 590); g.stroke(); g.restore();
@@ -1274,7 +1419,7 @@
         ctx.fillStyle = palette.bg; ctx.fillRect(0, 0, cssWidth, cssHeight);
         ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = palette.link; ctx.fillRect(0, 0, cssWidth, cssHeight); ctx.restore();
         ctx.save(); ctx.translate(cssWidth / 2, cssHeight * .50); ctx.scale(zoom, zoom); ctx.translate(-camera.x, -camera.y);
-        terrain(ctx, world.time, true);
+        terrain(ctx, world.time, true, world.progress.map.land);
         const foodTarget = world.foodTarget().item, obstacle = world.obstacleTarget();
         if (foodTarget) {
           ctx.save(); ctx.strokeStyle = palette.accent; ctx.lineWidth = 2.5; ctx.setLineDash([5, 5]);
@@ -1344,46 +1489,53 @@
         const g = canvas.getContext("2d"); g.setTransform(ratio, 0, 0, ratio, 0, 0);
         return { g, width: rect.width, height: rect.height };
       }
+      function drawThumbnail(image, draw) {
+        const rect = image.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        thumbnailCanvas.width = Math.max(1, Math.round(rect.width * ratio));
+        thumbnailCanvas.height = Math.max(1, Math.round(rect.height * ratio));
+        thumbnailContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+        draw(thumbnailContext, rect.width, rect.height);
+        image.src = thumbnailCanvas.toDataURL();
+      }
       function renderCards() {
         document.querySelectorAll(".dino-card").forEach(button => {
-          const canvas = button.querySelector("canvas"), f = fitCanvas(canvas), s = C.species(button.dataset.dino);
-          const scale = Math.min(f.width / 188, f.height / (s.shape === "brachio" ? 184 : 142));
-          dino(f.g, f.width * .48, f.height - 10, s.id, scale, 1);
+          const image = button.querySelector("img"), s = C.species(button.dataset.dino);
+          drawThumbnail(image, (g, width, height) => {
+            const scale = Math.min(width / 188, height / (s.shape === "brachio" ? 184 : 142));
+            dino(g, width * .48, height - 10, s.id, scale, 1);
+          });
         });
       }
       function renderPreview() {
-        const f = fitCanvas($("preview")), g = f.g;
-        if (!f.width) return;
-        g.fillStyle = palette["bg-elevated"]; g.fillRect(0, 0, f.width, f.height);
-        g.save(); g.translate(f.width * .5, f.height * .46); g.scale(f.width / 3100, f.height / 2100); g.translate(-1400, -950);
-        terrain(g, 0, false);
-        const miniTrees = [{ x: 600, y: 950, scale: 2 }, { x: 2150, y: 740, scale: 2.2 }, { x: 1050, y: 530, scale: 1.8 }, { x: 2310, y: 1000, scale: 1.5 }, { x: 490, y: 1230, scale: 1.7 }];
-        miniTrees.forEach(t => tree(g, Object.assign({ required: 1 }, t), 0));
-        g.restore();
-        g.save();
-        g.translate(f.width * .73, f.height * .43);
-        const mountainScale = Math.min(f.width / 1120, f.height / 530);
-        g.scale(mountainScale, mountainScale);
-        g.translate(-C.MAP.volcano.x, -C.MAP.volcano.y);
-        volcano(g, true);
-        g.restore();
-        const s = C.species(selected), scale = Math.min(f.height / (s.shape === "brachio" ? 280 : 235), f.width / 500);
-        dino(g, f.width * .39, f.height * .80, selected, scale, 1, 0, false, 0, 0);
-        if (s.diet === "plants") {
-          g.save(); g.translate(f.width * .70, f.height * .80); g.scale(.55, .55); bush(g, { x: 0, y: 0, hiddenUntil: 0 }, 0); g.restore();
-        } else {
-          dino(g, f.width * .79, f.height * .69, "compy", scale * .40, -1);
-        }
-      }
-      function renderPortrait() {
-        const f = fitCanvas($("player-portrait")), s = C.species(world.player.speciesId);
-        const scale = Math.min(f.width / 160, f.height / (s.shape === "brachio" ? 185 : 130));
-        dino(f.g, f.width * .43, f.height - 7, s.id, scale, 1);
+        drawThumbnail($("preview"), (g, width, height) => {
+          g.fillStyle = palette["bg-elevated"]; g.fillRect(0, 0, width, height);
+          g.save(); g.translate(width * .5, height * .5); g.scale(width / C.MAP.width, height / C.MAP.height); g.translate(-C.MAP.width / 2, -C.MAP.height / 2);
+          terrain(g, 0, false, world.progress.map.land);
+          const miniTrees = [{ x: 600, y: 950, scale: 2 }, { x: 2150, y: 740, scale: 2.2 }, { x: 1050, y: 530, scale: 1.8 }, { x: 2310, y: 1000, scale: 1.5 }, { x: 490, y: 1230, scale: 1.7 }];
+          miniTrees.forEach(t => tree(g, Object.assign({ required: 1 }, t), 0));
+          g.restore();
+          g.save();
+          g.translate(width * .73, height * .43);
+          const mountainScale = Math.min(width / 1120, height / 530);
+          g.scale(mountainScale, mountainScale);
+          g.translate(-C.MAP.volcano.x, -C.MAP.volcano.y);
+          volcano(g, true);
+          g.restore();
+          const s = C.species(selected), scale = Math.min(height / (s.shape === "brachio" ? 280 : 235), width / 500);
+          dino(g, width * .39, height * .80, selected, scale, 1, 0, false, 0, 0);
+          if (s.diet === "plants") {
+            g.save(); g.translate(width * .70, height * .80); g.scale(.55, .55); bush(g, { x: 0, y: 0, hiddenUntil: 0 }, 0); g.restore();
+          } else {
+            dino(g, width * .79, height * .69, "compy", scale * .40, -1);
+          }
+        });
       }
       function renderMiniMap() {
         const f = fitCanvas($("mini-map")), g = f.g;
         g.save(); g.scale(f.width / C.MAP.width, f.height / C.MAP.height);
-        terrain(g, 0, false); volcano(g, true);
+        terrain(g, 0, false, world.progress.map.land); volcano(g, true);
         ellipse(g, world.player.x, world.player.y, 88, 88, palette.surface);
         ellipse(g, world.player.x, world.player.y, 54, 54, palette.accent); g.restore();
       }
@@ -1396,13 +1548,13 @@
           zoom = C.clamp(Math.min(cssWidth / 1090, cssHeight / 650), .65, 1.3);
         }
         if (!$("home").hidden) { renderCards(); renderPreview(); }
-        else { renderPortrait(); renderMiniMap(); renderWorld(); }
+        else { renderMiniMap(); renderWorld(); }
       }
       function icon(name) { return '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
       function buildCards() {
         $("dino-cards").innerHTML = C.PLAYABLE.map(s =>
           '<button class="dino-card" data-dino="' + s.id + '" aria-pressed="false" aria-label="' + s.name + ' auswählen. ' + (s.diet === "meat" ? "Fleischfresser" : "Pflanzenfresser") + '">' +
-          '<span class="selected-check">' + icon("check") + '</span><canvas aria-hidden="true"></canvas><strong>' + s.label + '</strong><span class="diet">' + icon(s.diet === "meat" ? "food" : "leaf") +
+          '<span class="selected-check">' + icon("check") + '</span><img alt="" aria-hidden="true"><strong>' + s.label + '</strong><span class="diet">' + icon(s.diet === "meat" ? "food" : "leaf") +
           (s.diet === "meat" ? "Fleischfresser" : "Pflanzenfresser") + '</span></button>'
         ).join("");
         document.querySelectorAll(".dino-card").forEach(button => {
@@ -1483,9 +1635,12 @@
         mode = next; resetInput();
         const homeVisible = mode === "home" || (mode === "scores" && scoresReturn === "home");
         $("home").hidden = !homeVisible; $("game").hidden = homeVisible;
-        $("home").inert = mode !== "home"; $("game").inert = mode !== "play";
-        for (const name of ["pause", "help", "scores", "math"]) $(name + "-modal").hidden = mode !== name;
+        $("home").inert = mode !== "home"; $("game").inert = mode !== "play" && mode !== "editor";
+        $("game").classList.toggle("editor-active", mode === "editor");
+        gameCanvas.classList.toggle("editor-canvas", mode === "editor");
+        for (const name of ["pause", "help", "scores", "math", "world-editor"]) $(name + "-modal").hidden = mode !== (name === "world-editor" ? "editor" : name);
         if (mode === "play") lastTime = performance.now();
+        if (mode === "editor") { renderWorld(); renderMiniMap(); }
         if (focusId) $(focusId).focus();
       }
       function openScores(event) {
@@ -1573,6 +1728,62 @@
         persist(); selected = world.player.speciesId; setMode("home");
         selectDino(selected); resize(); $("start-button").focus();
       }
+      function openWorldEditor() {
+        if (mode !== "pause" || world.progress.math.pending) return;
+        editorTool = "land";
+        document.querySelectorAll("[data-editor-tool]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.editorTool === editorTool)));
+        $("editor-note").textContent = "Tippe auf die Karte, um eine Landfläche zu ergänzen. Ziehe die Karte zum Verschieben.";
+        setMode("editor", "editor-done-button");
+      }
+      function closeWorldEditor() {
+        if (mode !== "editor") return;
+        persist();
+        setMode("pause", "resume-button");
+      }
+      function editorOverview() {
+        camera.x = C.MAP.width / 2; camera.y = C.MAP.height / 2;
+        zoom = Math.min(cssWidth / C.MAP.width, cssHeight / C.MAP.height) * .92;
+        renderWorld();
+      }
+      function editorReturnToDino() {
+        camera.x = world.player.x; camera.y = world.player.y;
+        zoom = C.clamp(Math.min(cssWidth / 1090, cssHeight / 650), .65, 1.3);
+        renderWorld();
+      }
+      function editorZoom(factor) {
+        zoom = C.clamp(zoom * factor, .14, 1.3);
+        renderWorld();
+      }
+      function editWorldAt(event) {
+        const rect = gameCanvas.getBoundingClientRect();
+        const x = camera.x + (event.clientX - rect.left - cssWidth / 2) / zoom;
+        const y = camera.y + (event.clientY - rect.top - cssHeight / 2) / zoom;
+        let result;
+        if (editorTool === "land") result = world.placeLand(x, y);
+        else if (editorTool === "erase") {
+          const removed = world.eraseCustomAt(x, y);
+          $("editor-note").textContent = removed ? "Eigenes Objekt entfernt." : "Hier ist kein eigenes Objekt zum Entfernen.";
+          if (removed) { persist(); renderWorld(); renderMiniMap(); }
+          return;
+        } else if (editorTool === "water") result = world.removeLandAt(x, y);
+        else result = world.placeObject(editorTool, x, y);
+        const messages = {
+          bounds: "Zu nah am Kartenrand. Wähle einen Platz weiter innen.",
+          limit: "Du hast schon sehr viele eigene Teile gebaut.",
+          disconnected: "Neue Landflächen müssen an vorhandenes Land anschließen.",
+          water: "Baum, Stein und Futter brauchen festen Boden.",
+          occupied: "Hier steht schon etwas. Wähle einen freien Platz.",
+          "no-land": "Tippe auf eine eigene Landfläche, die du entfernen möchtest.",
+          disconnects: "Diese Landfläche verbindet andere Teile der Insel. Entferne zuerst die äußeren Flächen."
+        };
+        $("editor-note").textContent = result.ok
+          ? (editorTool === "land" ? "Landfläche ergänzt. Du kannst direkt daran weiterbauen." :
+            editorTool === "water" ? "Landfläche entfernt." : "Platziert. Deine Welt wird gespeichert.")
+          : editorTool === "water" && result.reason === "occupied"
+            ? "Dort stehen noch Dinos oder Gegenstände. Entferne sie zuerst."
+            : messages[result.reason] || "Hier kann gerade nichts gebaut werden.";
+        if (result.ok) { persist(); renderWorld(); renderMiniMap(); }
+      }
       function action(kind) {
         if (mode !== "play") return;
         if (kind === "eat") world.eat(); else world.push();
@@ -1600,11 +1811,12 @@
           if (saveClock > 5) { persist(); saveClock = 0; }
           if (!$("toast").hidden && timestamp > toastUntil) $("toast").hidden = true;
           renderWorld();
-        }
+        } else if (mode === "editor" && !document.hidden) renderWorld();
         requestAnimationFrame(loop);
       }
       function handleBack() {
         if (mode === "scores") { closeScores(); return true; }
+        if (mode === "editor") { closeWorldEditor(); return true; }
         if (mode === "help") { setMode("pause", "resume-button"); return true; }
         if (mode === "play" || mode === "math") { pause(); return true; }
         if (mode === "pause") { resume(); return true; }
@@ -1642,6 +1854,48 @@
         });
         $("pause-button").addEventListener("click", pause);
         $("resume-button").addEventListener("click", resume);
+        $("edit-world-button").addEventListener("click", openWorldEditor);
+        $("editor-done-button").addEventListener("click", closeWorldEditor);
+        $("editor-overview-button").addEventListener("click", editorOverview);
+        $("editor-player-button").addEventListener("click", editorReturnToDino);
+        $("editor-zoom-out-button").addEventListener("click", () => editorZoom(.72));
+        $("editor-zoom-in-button").addEventListener("click", () => editorZoom(1.4));
+        document.querySelectorAll("[data-editor-tool]").forEach(button => {
+          button.addEventListener("click", () => {
+            editorTool = button.dataset.editorTool;
+            document.querySelectorAll("[data-editor-tool]").forEach(tool => tool.setAttribute("aria-pressed", String(tool === button)));
+            $("editor-note").textContent = editorTool === "land" ? "Tippe auf die Karte, um eine Landfläche zu ergänzen." :
+              editorTool === "erase" ? "Tippe auf ein eigenes Objekt, um es zu entfernen." :
+              editorTool === "water" ? "Tippe auf eine eigene Landfläche, um sie zu entfernen." : "Tippe auf festen Boden, um das Objekt zu platzieren.";
+          });
+        });
+        gameCanvas.addEventListener("pointerdown", event => {
+          if (mode !== "editor" || editorPointer) return;
+          event.preventDefault();
+          editorPointer = { id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, moved: false };
+          gameCanvas.setPointerCapture(event.pointerId);
+        });
+        gameCanvas.addEventListener("pointermove", event => {
+          if (!editorPointer || event.pointerId !== editorPointer.id) return;
+          const dx = event.clientX - editorPointer.lastX, dy = event.clientY - editorPointer.lastY;
+          if (Math.hypot(event.clientX - editorPointer.x, event.clientY - editorPointer.y) > 5) editorPointer.moved = true;
+          if (editorPointer.moved) {
+            camera.x -= dx / zoom; camera.y -= dy / zoom;
+            editorPointer.lastX = event.clientX; editorPointer.lastY = event.clientY;
+            renderWorld();
+          }
+        });
+        gameCanvas.addEventListener("pointerup", event => {
+          if (!editorPointer || event.pointerId !== editorPointer.id) return;
+          editorSuppressClick = editorPointer.moved;
+          editorPointer = null;
+        });
+        gameCanvas.addEventListener("pointercancel", () => { editorPointer = null; });
+        gameCanvas.addEventListener("click", event => {
+          if (mode !== "editor") return;
+          if (editorSuppressClick) { editorSuppressClick = false; return; }
+          editWorldAt(event);
+        });
         $("change-button").addEventListener("click", goHome);
         $("help-button").addEventListener("click", () => {
           setMode("help", "close-help-button");
@@ -1694,8 +1948,8 @@
         window.addEventListener("pagehide", () => { pause(); persist(); });
         $("game").addEventListener("contextmenu", event => event.preventDefault());
         document.addEventListener("keydown", event => {
-          if (event.code !== "Tab" || !["pause", "help", "scores", "math"].includes(mode)) return;
-          const modal = $(mode + "-modal");
+          if (event.code !== "Tab" || !["pause", "help", "scores", "math", "editor"].includes(mode)) return;
+          const modal = $(mode === "editor" ? "world-editor-modal" : mode + "-modal");
           const buttons = Array.from(modal.querySelectorAll("button:not(:disabled), input")).filter(button => button.getClientRects().length);
           const first = buttons[0], last = buttons[buttons.length - 1];
           if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -1716,6 +1970,7 @@
             x: world.player.x, y: world.player.y, time: world.time, volcanoDormant: C.MAP.volcano.dormant,
             meals: world.player.meals, saved: !saveError, sound: world.progress.sound,
             obstaclesCleared: world.progress.cleared.length, mission: world.mission(), scores: C.localScores(world.progress),
+            landAreas: world.progress.map.land.length, customObjects: world.progress.map.objects.filter(Boolean).length,
             math: JSON.parse(JSON.stringify(world.progress.math)),
             npcs: world.npcs.map(n => ({ id: n.id, x: n.x, y: n.y, scale: n.scale, hiddenUntil: n.hiddenUntil })),
             input: { x: axis.x, y: axis.y, keys: Array.from(keys) }
