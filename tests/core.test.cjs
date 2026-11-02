@@ -210,6 +210,34 @@ test("water, coastline and the dormant volcano are solid boundaries", () => {
   assert.equal(C.terrainAllows(C.MAP.startX, C.MAP.startY, 23), true);
 });
 
+test("custom land and placed objects connect, persist and can be removed", () => {
+  const baseline = new C.World();
+  const world = new C.World();
+  const first = world.placeLand(C.MAP.centerX + C.MAP.radiusX - 50, C.MAP.centerY);
+  assert.equal(first.ok, true);
+  assert.equal(world.placeLand(3600, 1800).reason, "disconnected");
+  assert.equal(world.placeLand(first && C.MAP.centerX + C.MAP.radiusX + 220, C.MAP.centerY).ok, true);
+  assert.ok(world.canStand(C.MAP.centerX + C.MAP.radiusX + 260, C.MAP.centerY, 20));
+  assert.equal(world.placeObject("tree", 2800, C.MAP.centerY).ok, true);
+  assert.equal(world.placeObject("rock", 3000, C.MAP.centerY).ok, true);
+  assert.equal(world.placeObject("food", 3090, C.MAP.centerY).ok, true);
+  assert.equal(world.eraseCustomAt(3090, C.MAP.centerY), true);
+  assert.equal(world.progress.map.objects.filter(Boolean).length, 2);
+  const restored = new C.World(JSON.parse(JSON.stringify(world.save())));
+  assert.deepEqual(restored.obstacles.slice(0, 88).map(({ id, x, y }) => ({ id, x, y })),
+    baseline.obstacles.map(({ id, x, y }) => ({ id, x, y })), "built-in obstacle identities and locations stay stable");
+  assert.deepEqual(restored.food.slice(0, 48).map(({ id, x, y }) => ({ id, x, y })),
+    baseline.food.map(({ id, x, y }) => ({ id, x, y })), "the original food layout stays stable");
+  assert.equal(restored.progress.map.land.length, 2);
+  assert.equal(restored.progress.map.objects.filter(Boolean).length, 2);
+  assert.ok(restored.obstacles.some(item => item.id === "custom-0" && item.kind === "tree"));
+  assert.ok(restored.obstacles.some(item => item.id === "custom-1" && item.kind === "rock"));
+  assert.equal(restored.removeLandAt(2940, C.MAP.centerY).reason, "occupied");
+  assert.equal(restored.eraseCustomAt(3000, C.MAP.centerY), true);
+  assert.equal(restored.removeLandAt(2940, C.MAP.centerY).ok, true);
+  assert.equal(restored.progress.map.land.length, 1);
+});
+
 test("growing next to a tree does not trap a gently moved joystick", () => {
   const world = new C.World(), tree = world.obstacles[0], prey = world.npcs[0];
   world.player.x = tree.x - tree.radius - world.playerRadius() - .1;
@@ -298,7 +326,9 @@ test("invalid saves are rejected explicitly rather than treated as successes", (
     d => { d.dinos.trex.meals = -1; },
     d => { d.sound = "yes"; },
     d => { d.cleared = ["tree-0", "tree-0"]; },
-    d => { d.stats.volcano = null; }
+    d => { d.stats.volcano = null; },
+    d => { d.map.land = [{ id: "land-0", x: 3600, y: 1800 }]; },
+    d => { d.map.objects = [{ id: "custom-0", type: "tree", x: 3500, y: 1800 }]; }
   ];
   changes.forEach(change => {
     const data = C.emptyProgress(); change(data);
@@ -362,6 +392,7 @@ test("old progress migrates without changing growth, position or cleared obstacl
   assert.equal(migrated.stats.mathSolved, 0);
   assert.deepEqual(migrated.position, old.position);
   assert.deepEqual(migrated.cleared, old.cleared);
+  assert.deepEqual(migrated.map, { land: [], objects: [] });
 });
 
 test("local scores have six real dinosaur rows, deterministic ties and exact totals", () => {
